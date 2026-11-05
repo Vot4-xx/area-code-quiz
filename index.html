@@ -406,7 +406,7 @@
      ========================================================= -->
   <div id="home-view" class="view-container active">
     <div class="home-header">
-      <h1 class="home-title">🌍 Geoquiz</h1>
+      <h1 class="home-title">🌍 Geo Quiz</h1>
       <button class="icon-btn" id="theme-toggle-home" onclick="toggleTheme()" title="切换明暗模式">🌙</button>
     </div>
     
@@ -608,12 +608,11 @@
     let highlightedLayers = [];
     let selectedSuggestionIndex = -1;
 
-    // 🚀 优化后的动态缩放监听：控制文字显隐阈值，防止低缩放级别下文字扎堆卡顿
+    // 🚀 动态缩放监听：控制文字显隐阈值
     map.on('zoomend', () => {
       const currentZoom = map.getZoom();
       const mapElem = document.getElementById('map');
       
-      // 根据不同国家设定合适的文字显示最小缩放级别 (防止全局满屏文字)
       let threshold = 5;
       if (currentCountry === 'turkey') threshold = 8;
       else if (currentCountry === 'indonesia') threshold = 7;
@@ -785,7 +784,8 @@
       }
 
       let filename = 'brazil_ddd.geojson';
-      if (currentCountry === 'turkey') filename = 'tur_admin2.geojson';
+      // 🌟 已更新文件名：这里适配你修改后的 tur_admin2.json
+      if (currentCountry === 'turkey') filename = 'tur_admin2.json';
       if (currentCountry === 'germany') filename = 'landkreis.json';
       if (currentCountry === 'indonesia') filename = 'kota-kabupaten.json';
 

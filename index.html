@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geoquiz - 首页</title>
+  <title>Geo Quiz - 首页</title>
   <!-- 引入 Leaflet 地图样式库 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -325,7 +325,6 @@
       color: #f8fafc;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
     }
-    /* 通过 CSS 控制只有当容器没有 hide-labels 时才显示文字，极大提升性能 */
     .hide-labels .leaflet-tooltip.map-label-tooltip {
       display: none !important;
     }
@@ -580,12 +579,22 @@
   <script>
     const map = L.map('map').setView([-14.2350, -51.9253], 4);
 
-    const lightTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    // 🌟 创建两种底层瓦片图层：带文字标注 (Learn) 与 无文字标注 (Quiz，防止偷看答案)
+    const labelledTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       attribution: '&copy; Google Maps'
     });
-    lightTile.addTo(map);
+
+    // 干净无地名文字标注的图层（CartoDB Positron / 无文字 Tiles）
+    const unlabelledTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    });
+
+    // 默认加载带标注图层
+    labelledTile.addTo(map);
 
     let currentCountry = 'brazil'; 
     let allFeatures = [];
@@ -749,6 +758,15 @@
       const learnElems = document.querySelectorAll('.learn-only');
       const mapElem = document.getElementById('map');
 
+      // 🛡️ 关键修改：根据模式动态切换地图底图（测验模式使用无标注底图，防止暴露答案）
+      if (appMode === 'quiz') {
+        if (map.hasLayer(labelledTile)) map.removeLayer(labelledTile);
+        if (!map.hasLayer(unlabelledTile)) unlabelledTile.addTo(map);
+      } else {
+        if (map.hasLayer(unlabelledTile)) map.removeLayer(unlabelledTile);
+        if (!map.hasLayer(labelledTile)) labelledTile.addTo(map);
+      }
+
       if (currentCountry === 'turkey') {
         map.setView([38.9637, 35.2433], 6);
       } else if (currentCountry === 'germany') {
@@ -784,7 +802,6 @@
       }
 
       let filename = 'brazil_ddd.geojson';
-      // 🌟 已更新文件名：这里适配你修改后的 tur_admin2.json
       if (currentCountry === 'turkey') filename = 'tur_admin2.json';
       if (currentCountry === 'germany') filename = 'landkreis.json';
       if (currentCountry === 'indonesia') filename = 'kota-kabupaten.json';

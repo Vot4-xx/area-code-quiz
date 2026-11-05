@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Area Code Quiz - 首页</title>
+  <title>Geoquiz - 首页</title>
   <!-- 引入 Leaflet 地图样式库 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -98,10 +98,9 @@
       margin: 0;
     }
 
-    /* 🎯 优化：网格紧凑排版，贴合红色框范围 */
     .quiz-grid {
       display: grid;
-      grid-template-columns: repeat(2, 280px);
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px;
       width: 100%;
     }
@@ -110,13 +109,12 @@
       background: var(--target-box-bg);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 24px;
-      cursor: pointer;
+      padding: 20px;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 180px;
+      height: 190px;
       box-sizing: border-box;
     }
 
@@ -127,31 +125,36 @@
     }
 
     .quiz-card h3 {
-      margin: 0 0 10px 0;
+      margin: 0 0 15px 0;
       color: var(--topbar-text);
       font-size: 20px;
     }
 
-    .quiz-card p {
-      color: var(--badge-text);
-      font-size: 13px;
-      margin: 0;
+    .card-actions {
+      display: flex;
+      gap: 10px;
     }
 
     .card-btn {
+      flex: 1;
       background: var(--target-color);
       color: white;
       border: none;
-      padding: 10px 16px;
+      padding: 10px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
       text-align: center;
-      width: 100%;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+    .card-btn:hover { opacity: 0.9; }
+    .card-btn-learn {
+      background: #0284c7;
     }
 
     /* =========================================================
-       3. 游戏界面样式 (#game-view)
+       3. 游戏与学习界面通用样式 (#game-view)
        ========================================================= */
     #top-bar {
       height: 65px;
@@ -160,16 +163,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 25px;
+      padding: 0 20px;
       border-bottom: 2px solid var(--border-color);
       font-size: 16px;
       flex-shrink: 0;
+      position: relative;
     }
 
     .top-left, .top-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex: 1;
     }
 
@@ -180,11 +184,11 @@
     .stat-badge {
       background: var(--badge-bg);
       color: var(--badge-text);
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 8px;
       font-weight: bold;
       letter-spacing: 0.5px;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .target-prompt {
@@ -193,6 +197,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
     .target-prompt span {
       background: var(--target-box-bg);
@@ -200,9 +205,68 @@
       border-radius: 10px;
       color: var(--target-color);
       border: 1px solid var(--border-color);
-      font-size: 30px; 
+      font-size: 24px; 
       font-weight: bold;
       letter-spacing: 1px;
+      max-width: 350px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 🔍 搜索框样式 */
+    .search-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .search-input {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--target-box-bg);
+      color: var(--topbar-text);
+      font-size: 14px;
+      outline: none;
+      width: 240px;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: #0284c7;
+    }
+
+    .search-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 5px;
+      background: var(--container-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      z-index: 2000;
+      display: none;
+      text-align: left;
+    }
+
+    .dropdown-item {
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--topbar-text);
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-item:hover, .dropdown-item.selected {
+      background: var(--badge-bg);
+      color: #0284c7;
+      font-weight: bold;
     }
 
     .icon-btn {
@@ -243,6 +307,29 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
+    /* 🎯 徽章气泡样式 */
+    .map-label-tooltip {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 4px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+      font-weight: bold;
+      font-size: 10px;
+      color: #0f172a;
+      padding: 1px 4px !important;
+      pointer-events: none;
+    }
+    body.dark-mode .map-label-tooltip {
+      background: rgba(17, 24, 39, 0.85) !important;
+      border: 1px solid #374151 !important;
+      color: #f8fafc;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+    }
+    /* 通过 CSS 控制只有当容器没有 hide-labels 时才显示文字，极大提升性能 */
+    .hide-labels .leaflet-tooltip.map-label-tooltip {
+      display: none !important;
+    }
+
     /* 弹窗样式 */
     .modal-overlay {
       display: none;
@@ -256,12 +343,12 @@
     .modal-box {
       background: var(--container-bg);
       color: var(--topbar-text);
-      padding: 30px 40px;
+      padding: 25px 35px;
       border-radius: 16px;
       text-align: center;
       border: 1px solid var(--border-color);
       box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-      width: 320px;
+      width: 360px;
     }
     .modal-box h2 { margin-top: 0; font-size: 20px; }
     
@@ -269,10 +356,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       font-size: 14px;
     }
-    .setting-row input {
+    .setting-row input[type="number"] {
       width: 65px;
       padding: 6px;
       background: var(--target-box-bg);
@@ -281,6 +368,16 @@
       text-align: center;
       border-radius: 6px;
       font-size: 14px;
+    }
+    .setting-row select {
+      padding: 5px 10px;
+      background: var(--target-box-bg);
+      border: 1px solid var(--border-color);
+      color: var(--topbar-text);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
     }
 
     .btn {
@@ -309,48 +406,110 @@
      ========================================================= -->
   <div id="home-view" class="view-container active">
     <div class="home-header">
-      <h1 class="home-title">🌍 Area Code Quiz</h1>
+      <h1 class="home-title">🌍 Geoquiz</h1>
       <button class="icon-btn" id="theme-toggle-home" onclick="toggleTheme()" title="切换明暗模式">🌙</button>
     </div>
     
     <div class="quiz-grid">
-      <!-- 🎯 优化：精简标题为“巴西区号”，去掉了描述小字 -->
-      <div class="quiz-card" onclick="startBrazilQuiz()">
+      <!-- 巴西区号卡片 -->
+      <div class="quiz-card">
         <h3>🇧🇷 巴西区号</h3>
-        <button class="card-btn">开始挑战</button>
+        <div class="card-actions">
+          <button class="card-btn" onclick="initCountrySession('brazil', 'quiz')">测验模式</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('brazil', 'learn')">学习模式</button>
+        </div>
       </div>
 
-      <!-- 预留未来扩展的其他测验卡片位 -->
-      <div class="quiz-card" style="opacity: 0.6; cursor: not-allowed;">
-        <h3>🚀 更多区域</h3>
-        <button class="card-btn" style="background: #94a3b8;" disabled>敬请期待</button>
+      <!-- 土耳其行政区卡片 -->
+      <div class="quiz-card">
+        <h3>🇹🇷 土耳其行政区</h3>
+        <div class="card-actions">
+          <button class="card-btn" onclick="initCountrySession('turkey', 'quiz')">测验模式</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('turkey', 'learn')">学习模式</button>
+        </div>
+      </div>
+
+      <!-- 🇩🇪 德国郡县卡片 -->
+      <div class="quiz-card">
+        <h3>🇩🇪 德国郡县</h3>
+        <div class="card-actions">
+          <button class="card-btn" onclick="initCountrySession('germany', 'quiz')">测验模式</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('germany', 'learn')">学习模式</button>
+        </div>
+      </div>
+
+      <!-- 🇮🇩 印尼行政区卡片 -->
+      <div class="quiz-card">
+        <h3>🇮🇩 印尼行政区</h3>
+        <div class="card-actions">
+          <button class="card-btn" onclick="initCountrySession('indonesia', 'quiz')">测验模式</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('indonesia', 'learn')">学习模式</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- =========================================================
-     视图 2：游戏主界面 (Game View)
+     视图 2：游戏/学习主界面 (#game-view)
      ========================================================= -->
   <div id="game-view" class="view-container">
-    <!-- 顶部状态栏 -->
     <div id="top-bar">
       <div class="top-left">
-        <div class="stat-badge" id="score-fraction">进度: 0/0</div>
-        <div class="stat-badge" id="mistake-badge">失误: 0/<span id="max-mistake-display">2</span></div>
+        <!-- 学习模式左上角：颜色与边界自定义下拉菜单 -->
+        <div class="learn-only stat-badge" id="learn-polygon-toggle-wrap" style="display:none; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 13px;">
+          <div>
+            填充: 
+            <select id="learn-fill-color" onchange="togglePolygonVisibility()" style="padding: 2px 4px; background: var(--target-box-bg); color: var(--topbar-text); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer;">
+              <option value="default">默认</option>
+              <option value="transparent">无 (透明)</option>
+              <option value="#ef4444">红</option>
+              <option value="#3b82f6">蓝</option>
+              <option value="#eab308">黄</option>
+              <option value="#22c55e">绿</option>
+              <option value="#06b6d4">青</option>
+              <option value="#a855f7">紫</option>
+              <option value="#000000">黑</option>
+              <option value="#ffffff">白</option>
+            </select>
+          </div>
+          <div>
+            边界: 
+            <select id="learn-border-color" onchange="togglePolygonVisibility()" style="padding: 2px 4px; background: var(--target-box-bg); color: var(--topbar-text); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer;">
+              <option value="default">默认</option>
+              <option value="transparent">无 (隐藏)</option>
+              <option value="#ef4444">红</option>
+              <option value="#3b82f6">蓝</option>
+              <option value="#eab308">黄</option>
+              <option value="#22c55e">绿</option>
+              <option value="#06b6d4">青</option>
+              <option value="#a855f7">紫</option>
+              <option value="#000000">黑</option>
+              <option value="#ffffff">白</option>
+            </select>
+          </div>
+        </div>
+        <div class="quiz-only stat-badge" id="score-fraction">进度: 0/0</div>
+        <div class="quiz-only stat-badge" id="mistake-badge">失误: 0/<span id="max-mistake-display">2</span></div>
       </div>
       
       <div class="target-prompt">
-        <span id="target-ddd">--</span>
+        <span class="quiz-only" id="target-label">--</span>
+        <!-- 🔍 搜索框 -->
+        <div class="learn-only search-container" id="search-box-wrapper" style="display:none;">
+          <input class="search-input" id="search-code-input" type="text" placeholder="🔍 输入名称搜索 (↑↓选择, Enter搜索)..." oninput="updateSearchSuggestions(this.value)" onkeydown="handleSearchKeyDown(event)" autocomplete="off">
+          <div class="search-dropdown" id="search-dropdown"></div>
+        </div>
       </div>
 
       <div class="top-right">
-        <div class="stat-badge" id="time-val" style="color: #ef4444;">600秒</div>
+        <div class="quiz-only stat-badge" id="time-val" style="color: #ef4444;">不限时</div>
         <button class="icon-btn" id="theme-toggle-game" onclick="toggleTheme()" title="切换明暗模式">🌙</button>
-        <button class="icon-btn" onclick="toggleSettings()" title="游戏设置与控制">⚙️</button>
+        <button class="icon-btn quiz-only" onclick="toggleSettings()" title="游戏设置与控制">⚙️</button>
+        <button class="icon-btn learn-only" onclick="returnToHome()" title="返回主页" style="display:none;">🏠</button>
       </div>
     </div>
 
-    <div id="map"></div>
+    <div id="map" class="hide-labels"></div>
   </div>
 
   <div id="feedback-banner"></div>
@@ -360,22 +519,49 @@
     <div class="modal-box" style="text-align: left;">
       <h2>⚙️ 游戏设置与控制</h2>
       
-      <div style="margin: 20px 0;">
+      <div style="margin: 15px 0;">
         <div class="setting-row">
           <label>倒计时时长(秒):</label>
-          <input type="number" id="setting-time" value="600" min="10" max="3600">
+          <input type="number" id="setting-time" value="0" min="0" max="3600" title="设为0代表不限时">
         </div>
         <div class="setting-row">
           <label>单题最大错误数:</label>
           <input type="number" id="setting-mistakes" value="2" min="1" max="10">
         </div>
+        <div class="setting-row">
+          <label for="setting-fill-color">多边形填充颜色:</label>
+          <select id="setting-fill-color" onchange="togglePolygonVisibility()">
+            <option value="default">默认</option>
+            <option value="transparent">无 (透明)</option>
+            <option value="#ef4444">红</option>
+            <option value="#3b82f6">蓝</option>
+            <option value="#eab308">黄</option>
+            <option value="#22c55e">绿</option>
+            <option value="#06b6d4">青</option>
+            <option value="#a855f7">紫</option>
+            <option value="#000000">黑</option>
+            <option value="#ffffff">白</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label for="setting-border-color">多边形边界颜色:</label>
+          <select id="setting-border-color" onchange="togglePolygonVisibility()">
+            <option value="default">默认</option>
+            <option value="transparent">无 (隐藏)</option>
+            <option value="#ef4444">红</option>
+            <option value="#3b82f6">蓝</option>
+            <option value="#eab308">黄</option>
+            <option value="#22c55e">绿</option>
+            <option value="#06b6d4">青</option>
+            <option value="#a855f7">紫</option>
+            <option value="#000000">黑</option>
+            <option value="#ffffff">白</option>
+          </select>
+        </div>
       </div>
 
-      <div style="border-top: 1px solid var(--border-color); padding-top: 15px;">
-        <button class="btn btn-start" id="start-btn" onclick="toggleGame()">开始游戏</button>
-        <button class="btn btn-restart" onclick="resetGame(); closeSettings();">重新开始</button>
-        <button class="btn btn-close" onclick="closeSettings()">返回游戏</button>
-        <button class="btn btn-home" onclick="returnToHome()">返回主页</button>
+      <div style="border-top: 1px solid var(--border-color); padding-top: 15px;" id="settings-buttons-container">
+        <!-- 动态渲染按键 -->
       </div>
     </div>
   </div>
@@ -386,13 +572,12 @@
       <h2 id="modal-title" style="color: #008751;">游戏结束</h2>
       <p style="font-size: 18px; margin: 15px 0;">最终成绩：<span id="final-score" style="color: #008751; font-weight: bold;">(0/0)</span></p>
       <p style="font-size: 14px; color: #6b7280; margin-bottom: 25px;">总错误次数：<span id="final-mistakes">0</span> 次</p>
-      <button class="btn btn-start" onclick="closeModalAndReset()" style="width: 100%;">再玩一次</button>
+      <button class="btn btn-restart" onclick="closeModalAndRestart()" style="width: 100%;">重新开始</button>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // 初始化地图
     const map = L.map('map').setView([-14.2350, -51.9253], 4);
 
     const lightTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -400,9 +585,9 @@
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       attribution: '&copy; Google Maps'
     });
-
     lightTile.addTo(map);
 
+    let currentCountry = 'brazil'; 
     let allFeatures = [];
     let gameQuestions = []; 
     let currentQuestionIndex = 0;
@@ -412,95 +597,413 @@
     let currentMistakes = 0;
     let maxMistakes = 2;
     let totalMistakes = 0;
-    let timeLeft = 600;
-    let maxTime = 600;
+    let timeLeft = 0;
+    let maxTime = 0;
     let timerInterval = null;
     let isPlaying = false;
     let isPaused = false;
-    let geojsonLayer;
+    let geojsonLayer = null;
+    let appMode = 'quiz';
+    
+    let highlightedLayers = [];
+    let selectedSuggestionIndex = -1;
+
+    // 🚀 优化后的动态缩放监听：控制文字显隐阈值，防止低缩放级别下文字扎堆卡顿
+    map.on('zoomend', () => {
+      const currentZoom = map.getZoom();
+      const mapElem = document.getElementById('map');
+      
+      // 根据不同国家设定合适的文字显示最小缩放级别 (防止全局满屏文字)
+      let threshold = 5;
+      if (currentCountry === 'turkey') threshold = 8;
+      else if (currentCountry === 'indonesia') threshold = 7;
+      else if (currentCountry === 'germany') threshold = 7;
+
+      if (currentZoom >= threshold) {
+        mapElem.classList.remove('hide-labels');
+      } else {
+        mapElem.classList.add('hide-labels');
+      }
+    });
 
     function style(feature) {
       const isDark = document.body.classList.contains('dark-mode');
+      
+      let fillColorSel = 'default';
+      let borderColorSel = 'default';
+
+      if (appMode === 'quiz') {
+        fillColorSel = document.getElementById('setting-fill-color').value;
+        borderColorSel = document.getElementById('setting-border-color').value;
+      } else if (appMode === 'learn') {
+        fillColorSel = document.getElementById('learn-fill-color').value;
+        borderColorSel = document.getElementById('learn-border-color').value;
+      }
+
+      let defaultFill = '#38b000';
+      if (currentCountry === 'turkey') defaultFill = '#0284c7';
+      if (currentCountry === 'germany') defaultFill = '#7c3aed';
+      if (currentCountry === 'indonesia') defaultFill = '#f97316';
+
+      let finalFillColor = isDark ? '#334155' : defaultFill;
+      let finalFillOpacity = 0.15;
+      if (fillColorSel === 'transparent') {
+        finalFillColor = 'transparent';
+        finalFillOpacity = 0;
+      } else if (fillColorSel !== 'default') {
+        finalFillColor = fillColorSel;
+        finalFillOpacity = 0.35;
+      }
+
+      let finalBorderColor = '#ffffff';
+      let finalWeight = 1.0;
+      let finalOpacity = 0.8;
+      if (borderColorSel === 'transparent') {
+        finalBorderColor = 'transparent';
+        finalWeight = 0;
+        finalOpacity = 0;
+      } else if (borderColorSel !== 'default') {
+        finalBorderColor = borderColorSel;
+        finalWeight = 1.2;
+        finalOpacity = 0.9;
+      }
+
       return {
-        fillColor: isDark ? '#334155' : '#38b000',
-        weight: 1.5,
-        opacity: 1,
-        color: '#ffffff',
-        fillOpacity: 0.4
+        fillColor: finalFillColor,
+        fillOpacity: finalFillOpacity,
+        weight: finalWeight,
+        opacity: finalOpacity,
+        color: finalBorderColor
       };
     }
 
-    // 切换全局明暗主题
+    function togglePolygonVisibility() {
+      if (geojsonLayer) {
+        geojsonLayer.setStyle(style);
+      }
+    }
+
     function toggleTheme() {
       document.body.classList.toggle('dark-mode');
       const isDark = document.body.classList.contains('dark-mode');
       const themeText = isDark ? '☀️' : '🌙';
       document.getElementById('theme-toggle-home').innerText = themeText;
       document.getElementById('theme-toggle-game').innerText = themeText;
+      if (geojsonLayer) geojsonLayer.setStyle(style);
+    }
+
+    function getFeatureValue(feature) {
+      const props = feature.properties || {};
+      if (currentCountry === 'brazil') {
+        return String(props.description || props.name || '');
+      } else if (currentCountry === 'turkey') {
+        return String(
+          props.adm2_name1 || 
+          props.adm2_name || 
+          props.ADM2_EN || 
+          props.name || 
+          props.NAME_2 || 
+          props.district || 
+          ''
+        );
+      } else if (currentCountry === 'germany') {
+        return String(props.GEN || props.name || props.NAME_2 || props.district || '');
+      } else if (currentCountry === 'indonesia') {
+        return String(props.NAME_2 || props.kabupaten || props.kota || props.name || props.NAME_3 || '');
+      }
+      return '';
+    }
+
+    function normalizeStr(str) {
+      if (!str) return '';
+      return str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ç/g, 'c')
+        .replace(/ş/g, 's')
+        .replace(/ğ/g, 'g')
+        .replace(/ı/g, 'i')
+        .replace(/İ/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ü/g, 'u')
+        .replace(/â/g, 'a')
+        .replace(/î/g, 'i')
+        .replace(/û/g, 'u')
+        .replace(/ä/g, 'a')
+        .replace(/ë/g, 'e')
+        .replace(/ï/g, 'i')
+        .replace(/ö/g, 'o')
+        .replace(/ü/g, 'u')
+        .replace(/ß/g, 'ss');
+    }
+
+    function initCountrySession(country, mode) {
+      currentCountry = country;
+      appMode = mode;
+      clearHighlightedLayers();
       
+      document.getElementById('home-view').classList.remove('active');
+      document.getElementById('game-view').classList.add('active');
+
+      const quizElems = document.querySelectorAll('.quiz-only');
+      const learnElems = document.querySelectorAll('.learn-only');
+      const mapElem = document.getElementById('map');
+
+      if (currentCountry === 'turkey') {
+        map.setView([38.9637, 35.2433], 6);
+      } else if (currentCountry === 'germany') {
+        map.setView([51.1657, 10.4515], 6);
+      } else if (currentCountry === 'indonesia') {
+        map.setView([-0.7893, 113.9213], 5);
+      } else {
+        map.setView([-14.2350, -51.9253], 4);
+      }
+
+      if (appMode === 'learn') {
+        quizElems.forEach(el => el.style.display = 'none');
+        learnElems.forEach(el => el.style.display = 'inline-block');
+        document.getElementById('learn-polygon-toggle-wrap').style.display = 'flex';
+        document.getElementById('search-code-input').value = '';
+        closeSearchDropdown();
+        resetGame();
+        const targetZoom = (currentCountry === 'turkey' || currentCountry === 'indonesia') ? 7 : (currentCountry === 'germany' ? 7 : 5);
+        map.setZoom(targetZoom);
+        if (map.getZoom() >= targetZoom) mapElem.classList.remove('hide-labels');
+      } else {
+        quizElems.forEach(el => el.style.display = 'inline-block');
+        learnElems.forEach(el => el.style.display = 'none');
+        mapElem.classList.add('hide-labels');
+      }
+
+      loadGeoJSONData();
+    }
+
+    function loadGeoJSONData() {
       if (geojsonLayer) {
-        geojsonLayer.setStyle(style);
+        map.removeLayer(geojsonLayer);
+      }
+
+      let filename = 'brazil_ddd.geojson';
+      if (currentCountry === 'turkey') filename = 'tur_admin2.geojson';
+      if (currentCountry === 'germany') filename = 'landkreis.json';
+      if (currentCountry === 'indonesia') filename = 'kota-kabupaten.json';
+
+      fetch(filename)
+        .then(response => {
+          if (!response.ok) throw new Error(`找不到对应文件 ${filename}！请确认已正确上传。`);
+          return response.json();
+        })
+        .then(data => {
+          allFeatures = data.features;
+          geojsonLayer = L.geoJSON(data, {
+            style: style,
+            onEachFeature: onEachFeature
+          }).addTo(map);
+
+          resetGame();
+          setTimeout(() => { map.invalidateSize(); if (appMode === 'quiz') openSettings(); }, 200);
+        })
+        .catch(err => {
+          alert(err.message);
+          console.error(err);
+          returnToHome();
+        });
+    }
+
+    function updateSearchSuggestions(query) {
+      const cleanQuery = normalizeStr(query.trim());
+      const dropdown = document.getElementById('search-dropdown');
+      selectedSuggestionIndex = -1;
+      
+      if (!cleanQuery) {
+        closeSearchDropdown();
+        clearHighlightedLayers();
+        return;
+      }
+
+      const matches = [];
+      geojsonLayer.eachLayer(layer => {
+        const val = getFeatureValue(layer.feature);
+        if (normalizeStr(val).includes(cleanQuery)) {
+          matches.push({ name: val, layer: layer });
+        }
+      });
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `<div class="dropdown-item" style="color: #9ca3af; cursor: default;">未找到相关地名</div>`;
+        dropdown.style.display = 'block';
+        return;
+      }
+
+      dropdown.innerHTML = matches.slice(0, 15).map((item, index) => 
+        `<div class="dropdown-item" id="suggestion-item-${index}" onclick="selectSearchResult('${item.name.replace(/'/g, "\\'")}')">${item.name}</div>`
+      ).join('');
+
+      dropdown.style.display = 'block';
+    }
+
+    function handleSearchKeyDown(e) {
+      const dropdown = document.getElementById('search-dropdown');
+      const items = dropdown.getElementsByClassName('dropdown-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length > 0) {
+          if (selectedSuggestionIndex < items.length - 1) selectedSuggestionIndex++;
+          updateDropdownSelection(items);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length > 0) {
+          if (selectedSuggestionIndex > 0) selectedSuggestionIndex--;
+          updateDropdownSelection(items);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0 && items[selectedSuggestionIndex]) {
+          items[selectedSuggestionIndex].click();
+        } else {
+          const query = document.getElementById('search-code-input').value;
+          performGlobalSearch(query);
+        }
+      } else if (e.key === 'Escape') {
+        closeSearchDropdown();
       }
     }
 
-    // 视图切换：从主页进入巴西区号测验
-    function startBrazilQuiz() {
-      document.getElementById('home-view').classList.remove('active');
-      document.getElementById('game-view').classList.add('active');
-      setTimeout(() => { 
-        map.invalidateSize(); 
-        openSettings();
-      }, 200);
+    function updateDropdownSelection(items) {
+      for (let i = 0; i < items.length; i++) {
+        if (i === selectedSuggestionIndex) {
+          items[i].classList.add('selected');
+          items[i].scrollIntoView({ block: 'nearest' });
+        } else {
+          items[i].classList.remove('selected');
+        }
+      }
     }
 
-    // 视图切换：从测验返回主页
+    function performGlobalSearch(query) {
+      const cleanQuery = normalizeStr(query.trim());
+      closeSearchDropdown();
+      clearHighlightedLayers();
+
+      if (!cleanQuery) return;
+
+      const bounds = L.latLngBounds();
+      let matchCount = 0;
+
+      geojsonLayer.eachLayer(layer => {
+        const val = getFeatureValue(layer.feature);
+        if (normalizeStr(val).includes(cleanQuery)) {
+          highlightedLayers.push(layer);
+          layer.setStyle({ fillColor: '#f59e0b', fillOpacity: 0.5, weight: 2, color: '#fbbf24' });
+          bounds.extend(layer.getBounds());
+          matchCount++;
+        }
+      });
+
+      if (matchCount > 0) {
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10, animate: true });
+        showFeedback(`🔍 找到了 ${matchCount} 个匹配区域`, "#0284c7");
+      } else {
+        showFeedback(`❌ 未找到匹配区域`, "#ef4444");
+      }
+      setTimeout(hideFeedback, 2500);
+    }
+
+    function selectSearchResult(name) {
+      document.getElementById('search-code-input').value = name;
+      closeSearchDropdown();
+      clearHighlightedLayers();
+
+      geojsonLayer.eachLayer(layer => {
+        const val = getFeatureValue(layer.feature);
+        if (val === name) {
+          highlightedLayers.push(layer);
+          layer.setStyle({ fillColor: '#f59e0b', fillOpacity: 0.6, weight: 3, color: '#fbbf24' });
+          map.fitBounds(layer.getBounds(), { maxZoom: 9, animate: true });
+          showFeedback(`📍 ${val}`, "#0284c7");
+          setTimeout(hideFeedback, 2000);
+        }
+      });
+    }
+
+    function closeSearchDropdown() {
+      document.getElementById('search-dropdown').style.display = 'none';
+      selectedSuggestionIndex = -1;
+    }
+
+    function clearHighlightedLayers() {
+      highlightedLayers.forEach(layer => {
+        geojsonLayer.resetStyle(layer);
+      });
+      highlightedLayers = [];
+    }
+
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('search-box-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        closeSearchDropdown();
+      }
+    });
+
     function returnToHome() {
       resetGame();
       closeSettings();
+      clearHighlightedLayers();
       document.getElementById('game-over-modal').style.display = 'none';
       document.getElementById('game-view').classList.remove('active');
       document.getElementById('home-view').classList.add('active');
     }
 
-    // 齿轮按钮控制设置面板
     function toggleSettings() {
+      if (appMode === 'learn') return;
       const modal = document.getElementById('settings-modal');
-      if (modal.style.display === 'flex') {
-        closeSettings();
-      } else {
-        openSettings();
-      }
+      if (modal.style.display === 'flex') closeSettings();
+      else openSettings();
     }
 
     function openSettings() {
+      if (appMode === 'learn') return;
       document.getElementById('settings-modal').style.display = 'flex';
-      if (isPlaying) {
-        isPaused = true;
-      }
+      if (isPlaying) isPaused = true;
     }
 
     function closeSettings() {
       document.getElementById('settings-modal').style.display = 'none';
-      if (isPlaying) {
-        isPaused = false;
-      }
+      if (isPlaying) isPaused = false;
     }
 
-    function toggleGame() {
+    function updateSettingsButtons() {
+      const container = document.getElementById('settings-buttons-container');
       if (!isPlaying) {
-        initGame();
-        closeSettings();
+        container.innerHTML = `
+          <button class="btn btn-start" onclick="initGame(); closeSettings();">开始游戏</button>
+          <button class="btn btn-close" onclick="closeSettings()">返回游戏</button>
+          <button class="btn btn-home" onclick="returnToHome()">返回主页</button>
+        `;
+      } else {
+        container.innerHTML = `
+          <button class="btn btn-restart" onclick="initGame(); closeSettings();">重新开始</button>
+          <button class="btn btn-close" onclick="closeSettings()">返回游戏</button>
+          <button class="btn btn-home" onclick="returnToHome()">返回主页</button>
+        `;
       }
     }
 
     function initGame() {
-      maxTime = parseInt(document.getElementById('setting-time').value) || 600;
+      maxTime = parseInt(document.getElementById('setting-time').value) || 0;
       maxMistakes = parseInt(document.getElementById('setting-mistakes').value) || 2;
       document.getElementById('max-mistake-display').innerText = maxMistakes;
 
       if (allFeatures.length === 0) {
         alert('地图数据尚未加载完成！');
         return;
+      }
+
+      if (geojsonLayer) {
+        geojsonLayer.setStyle(style);
       }
 
       let shuffled = [...allFeatures].sort(() => 0.5 - Math.random());
@@ -518,42 +1021,43 @@
       updateUI();
       hideFeedback();
       document.getElementById('game-over-modal').style.display = 'none';
-      document.getElementById('start-btn').innerText = "游戏中...";
-      document.getElementById('start-btn').disabled = true;
 
       if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        if (!isPaused && isPlaying) {
-          timeLeft--;
-          document.getElementById('time-val').innerText = timeLeft + "秒";
-          if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            endGame("⏰ 时间到！游戏结束");
+      
+      if (maxTime > 0) {
+        timerInterval = setInterval(() => {
+          if (!isPaused && isPlaying) {
+            timeLeft--;
+            document.getElementById('time-val').innerText = timeLeft + "秒";
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              endGame("⏰ 时间到！游戏结束");
+            }
           }
-        }
-      }, 1000);
+        }, 1000);
+      }
 
       loadNextQuestion();
+      updateSettingsButtons();
     }
 
     function resetGame() {
       if (timerInterval) clearInterval(timerInterval);
       isPlaying = false;
       isPaused = false;
-      document.getElementById('start-btn').innerText = "开始游戏";
-      document.getElementById('start-btn').disabled = false;
-      document.getElementById('target-ddd').innerText = "--";
+      clearHighlightedLayers();
+      document.getElementById('target-label').innerText = "--";
       hideFeedback();
       document.getElementById('score-fraction').innerText = `进度: 0/${allFeatures.length}`;
-      document.getElementById('time-val').innerText = document.getElementById('setting-time').value + "秒";
+      document.getElementById('time-val').innerText = "不限时";
       document.getElementById('mistake-badge').innerHTML = `失误: 0/<span id="max-mistake-display">${document.getElementById('setting-mistakes').value}</span>`;
       if (geojsonLayer) geojsonLayer.setStyle(style);
+      updateSettingsButtons();
     }
 
-    function closeModalAndReset() {
+    function closeModalAndRestart() {
       document.getElementById('game-over-modal').style.display = 'none';
-      resetGame();
-      openSettings();
+      initGame();
     }
 
     function endGame(titleText) {
@@ -568,7 +1072,11 @@
 
     function updateUI() {
       document.getElementById('score-fraction').innerText = `进度: ${correctCount}/${totalQuestions}`;
-      document.getElementById('time-val').innerText = timeLeft + "秒";
+      if (maxTime > 0) {
+        document.getElementById('time-val').innerText = timeLeft + "秒";
+      } else {
+        document.getElementById('time-val').innerText = "不限时";
+      }
       document.getElementById('mistake-badge').innerHTML = `失误: ${currentMistakes}/<span id="max-mistake-display">${maxMistakes}</span>`;
     }
 
@@ -594,42 +1102,104 @@
       updateUI();
 
       const currentFeature = gameQuestions[currentQuestionIndex];
-      currentTarget = currentFeature.properties.description;
-      document.getElementById('target-ddd').innerText = currentTarget;
+      currentTarget = getFeatureValue(currentFeature);
+      document.getElementById('target-label').innerText = currentTarget;
     }
 
     function highlightCorrectAnswer() {
       geojsonLayer.eachLayer(layer => {
-        if (String(layer.feature.properties.description) === String(currentTarget)) {
-          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.8 });
-          setTimeout(() => {
-            geojsonLayer.resetStyle(layer);
-          }, 1500);
+        if (getFeatureValue(layer.feature) === currentTarget) {
+          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.5 });
+          setTimeout(() => { geojsonLayer.resetStyle(layer); }, 1500);
         }
       });
     }
 
+    function getFeatureMainCenter(feature) {
+      const geom = feature.geometry;
+      if (!geom) return null;
+
+      let polygons = [];
+      if (geom.type === 'Polygon') {
+        polygons = [geom.coordinates];
+      } else if (geom.type === 'MultiPolygon') {
+        polygons = geom.coordinates;
+      } else {
+        return null;
+      }
+
+      let maxArea = -1;
+      let bestCenter = null;
+
+      polygons.forEach(polyCoords => {
+        const ring = polyCoords[0];
+        if (!ring || ring.length === 0) return;
+
+        let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+        ring.forEach(pt => {
+          let lng = pt[0], lat = pt[1];
+          if (lng < minLng) minLng = lng;
+          if (lng > maxLng) maxLng = lng;
+          if (lat < minLat) minLat = lat;
+          if (lat > maxLat) maxLat = lat;
+        });
+
+        let area = (maxLng - minLng) * (maxLat - minLat);
+        if (area > maxArea) {
+          maxArea = area;
+          bestCenter = [(minLat + maxLat) / 2, (minLng + maxLng) / 2];
+        }
+      });
+
+      return bestCenter;
+    }
+
     function onEachFeature(feature, layer) {
-      const props = feature.properties;
-      const dddValue = props.description;
+      const val = getFeatureValue(feature);
+      const mainCenter = getFeatureMainCenter(feature);
+
+      if (mainCenter && val) {
+        L.tooltip({
+          permanent: true,
+          direction: 'center',
+          className: 'map-label-tooltip'
+        })
+        .setContent(String(val))
+        .setLatLng(mainCenter)
+        .addTo(map);
+      }
 
       layer.on({
         mouseover: (e) => {
-          if (isPlaying && !isPaused) e.target.setStyle({ fillOpacity: 0.7 });
+          if (appMode === 'learn' || (isPlaying && !isPaused)) {
+            if (!highlightedLayers.includes(e.target)) {
+              e.target.setStyle({ fillOpacity: 0.35 });
+            }
+          }
         },
         mouseout: (e) => {
-          if (isPlaying && !isPaused) geojsonLayer.resetStyle(e.target);
+          if (appMode === 'learn' || (isPlaying && !isPaused)) {
+            if (!highlightedLayers.includes(e.target)) {
+              geojsonLayer.resetStyle(e.target);
+            }
+          }
         },
         click: (e) => {
+          if (appMode === 'learn') {
+            showFeedback(`📍 ${val || '未知区域'}`, "#0284c7");
+            setTimeout(hideFeedback, 1500);
+            return;
+          }
+
           if (!isPlaying || isPaused) return;
 
-          if (String(dddValue) === String(currentTarget)) {
-            showFeedback(`🎉 答对了！区号 ${dddValue}`, "#16a34a");
+          if (val === currentTarget && val !== '') {
+            showFeedback(`🎉 答对了！${val}`, "#16a34a");
             correctCount++;
             currentQuestionIndex++;
             updateUI();
             
-            e.target.setStyle({ fillColor: '#16a34a', fillOpacity: 0.8 });
+            e.target.setStyle({ fillColor: '#16a34a', fillOpacity: 0.4 });
             setTimeout(() => {
               if (isPlaying) {
                 geojsonLayer.resetStyle(e.target);
@@ -644,7 +1214,7 @@
             updateUI();
 
             if (currentMistakes >= maxMistakes) {
-              showFeedback(`❌ 错误次数达上限！正确是区号 ${currentTarget}`, "#dc2626");
+              showFeedback(`❌ 错误次数达上限！正确是: ${currentTarget}`, "#dc2626");
               highlightCorrectAnswer();
 
               currentQuestionIndex++;
@@ -655,31 +1225,12 @@
                 }
               }, 1500);
             } else {
-              showFeedback(`❌ 猜错了（${currentMistakes}/${maxMistakes}次），你点的是区号 ${dddValue}`, "#ea580c");
+              showFeedback(`❌ 猜错了（${currentMistakes}/${maxMistakes}次），你点的是: ${val || '未知区域'}`, "#ea580c");
             }
           }
         }
       });
     }
-
-    fetch('brazil_ddd.geojson')
-      .then(response => {
-        if (!response.ok) throw new Error("找不到对应文件！");
-        return response.json();
-      })
-      .then(data => {
-        allFeatures = data.features;
-        geojsonLayer = L.geoJSON(data, {
-          style: style,
-          onEachFeature: onEachFeature
-        }).addTo(map);
-
-        resetGame();
-      })
-      .catch(err => {
-        alert(err.message);
-        console.error(err);
-      });
   </script>
 </body>
 </html>

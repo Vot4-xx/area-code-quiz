@@ -1,2 +1,2 @@
-just an quiz web 100% made by gemini
-https://vot4-xx.github.io/area-code-quiz/
+quiz web for geoenjoyer / 100% made by gemini  
+https://vot4-xx.github.io/geo-quizz/

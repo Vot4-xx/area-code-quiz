@@ -307,7 +307,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
-    /* 🎯 徽章气泡样式 */
+    /* 🎯 学习模式专属徽章气泡样式 */
     .map-label-tooltip {
       background: rgba(255, 255, 255, 0.9) !important;
       border: 1px solid #cbd5e1 !important;
@@ -579,22 +579,12 @@
   <script>
     const map = L.map('map').setView([-14.2350, -51.9253], 4);
 
-    // 🌟 创建两种底层瓦片图层：带文字标注 (Learn) 与 无文字标注 (Quiz，防止偷看答案)
-    const labelledTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    const googleTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       attribution: '&copy; Google Maps'
     });
-
-    // 干净无地名文字标注的图层（CartoDB Positron / 无文字 Tiles）
-    const unlabelledTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      subdomains: 'abcd',
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    });
-
-    // 默认加载带标注图层
-    labelledTile.addTo(map);
+    googleTile.addTo(map);
 
     let currentCountry = 'brazil'; 
     let allFeatures = [];
@@ -617,7 +607,6 @@
     let highlightedLayers = [];
     let selectedSuggestionIndex = -1;
 
-    // 🚀 动态缩放监听：控制文字显隐阈值
     map.on('zoomend', () => {
       const currentZoom = map.getZoom();
       const mapElem = document.getElementById('map');
@@ -757,15 +746,6 @@
       const quizElems = document.querySelectorAll('.quiz-only');
       const learnElems = document.querySelectorAll('.learn-only');
       const mapElem = document.getElementById('map');
-
-      // 🛡️ 关键修改：根据模式动态切换地图底图（测验模式使用无标注底图，防止暴露答案）
-      if (appMode === 'quiz') {
-        if (map.hasLayer(labelledTile)) map.removeLayer(labelledTile);
-        if (!map.hasLayer(unlabelledTile)) unlabelledTile.addTo(map);
-      } else {
-        if (map.hasLayer(unlabelledTile)) map.removeLayer(unlabelledTile);
-        if (!map.hasLayer(labelledTile)) labelledTile.addTo(map);
-      }
 
       if (currentCountry === 'turkey') {
         map.setView([38.9637, 35.2433], 6);
@@ -1175,7 +1155,8 @@
       const val = getFeatureValue(feature);
       const mainCenter = getFeatureMainCenter(feature);
 
-      if (mainCenter && val) {
+      // 🛡️ 严格确保：只有在学习模式 (learn) 下才渲染地名气泡标签，测验模式 (quiz) 下绝对不渲染任何标签！
+      if (appMode === 'learn' && mainCenter && val) {
         L.tooltip({
           permanent: true,
           direction: 'center',

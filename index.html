@@ -304,12 +304,20 @@
     .icon-btn:hover { background: #cbd5e1; transform: scale(1.03); }
     body.dark-mode .icon-btn:hover { background: #374151; }
 
+    #map-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
     #map {
       flex: 1;
       width: 100%;
     }
 
-    /* 🎯 气泡样式 */
+    /* 🏷️ 地名标签 Tooltip 样式 */
     .map-label-tooltip {
       background: rgba(255, 255, 255, 0.92) !important;
       border: 1px solid #cbd5e1 !important;
@@ -328,17 +336,57 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
     }
 
-    /* 错题回顾状态下的气泡显眼样式 */
-    .wrong-review-tooltip {
-      background: #dc2626 !important;
-      color: #ffffff !important;
-      border: 1px solid #991b1b !important;
-      font-weight: bold;
-      z-index: 1000 !important;
-    }
-
     .hide-labels .leaflet-tooltip.map-label-tooltip {
       display: none !important;
+    }
+
+    /* 📢 底部居中提示框（Toast） */
+    .quiz-toast {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.88);
+      color: #ffffff;
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 2000;
+      display: none;
+      pointer-events: none;
+      text-align: center;
+      max-width: 80%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      animation: fadeIn 0.2s ease;
+    }
+
+    body.dark-mode .quiz-toast {
+      background: rgba(248, 250, 252, 0.92);
+      color: #0f172a;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .quiz-toast.success {
+      background: rgba(22, 163, 74, 0.92);
+      color: #ffffff;
+      border-color: #22c55e;
+    }
+
+    .quiz-toast.error {
+      background: rgba(220, 38, 38, 0.92);
+      color: #ffffff;
+      border-color: #ef4444;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
     }
 
     /* 弹窗样式 */
@@ -490,7 +538,7 @@
   </div>
 
   <!-- =========================================================
-     视图 2：游戏/学习主界面 (#game-view)
+     视图 2：游戏与学习界面 (#game-view)
      ========================================================= -->
   <div id="game-view" class="view-container">
     <div id="top-bar">
@@ -550,7 +598,11 @@
       </div>
     </div>
 
-    <div id="map" class="hide-labels"></div>
+    <div id="map-wrapper">
+      <div id="map" class="hide-labels"></div>
+      <!-- 📢 底部居中提示框 (Toast) -->
+      <div id="quiz-toast" class="quiz-toast"></div>
+    </div>
   </div>
 
   <!-- ⚙️ 设置与控制弹窗面板 -->
@@ -646,13 +698,13 @@
     let isPaused = false;
     let isWaitingNext = false; 
     let wrongAnswers = [];     
-    let reviewTooltips = [];   
     let geojsonLayer = null;
     let appMode = 'quiz';
+    let toastTimer = null;
     
     let highlightedLayers = [];
     let selectedSuggestionIndex = -1;
-    let learnTooltips = []; // 🚀 用于动态管理学习模式下的气泡
+    let learnTooltips = []; 
 
     // --- 💾 本地持久化存储 (LocalStorage) ---
     function loadSavedSettings() {
@@ -743,7 +795,10 @@
         optCyan: "Cyan",
         optPurple: "Purple",
         optBlack: "Black",
-        optWhite: "White"
+        optWhite: "White",
+        correctText: "Correct!",
+        wrongText: "Wrong! This is: ",
+        maxMistakesText: "Max mistakes reached! Correct answer: "
       },
       zh: {
         langBtn: "🌐 中文",
@@ -784,7 +839,10 @@
         optCyan: "青",
         optPurple: "紫",
         optBlack: "黑",
-        optWhite: "白"
+        optWhite: "白",
+        correctText: "回答正确！",
+        wrongText: "选错了，这个是：",
+        maxMistakesText: "失误达到上限了，正确答案是："
       }
     };
 
@@ -838,9 +896,8 @@
       updateSettingsButtons();
     }
 
-    // 🚀 防卡顿优化：根据不同国家的精细程度，动态控制标签显现的最小缩放等级
     function getLabelZoomThreshold() {
-      if (currentCountry === 'japan') return 10; // 日本市町村极密，放到 Zoom >= 10 才显示标签
+      if (currentCountry === 'japan') return 10; 
       if (currentCountry === 'turkey' || currentCountry === 'indonesia' || currentCountry === 'germany') return 7;
       return 5;
     }
@@ -853,7 +910,7 @@
       if (currentZoom >= threshold) {
         mapElem.classList.remove('hide-labels');
         if (appMode === 'learn') {
-          updateLearnModeViewportTooltips(); // 动态仅渲染视口内的标签
+          updateLearnModeViewportTooltips();
         }
       } else {
         mapElem.classList.add('hide-labels');
@@ -866,7 +923,7 @@
       learnTooltips = [];
     }
 
-    // 🚀 核心防卡顿逻辑：只在当前地图可视区域（Viewport Bounds）内动态创建 Tooltip
+    // 🏷️ 学习模式下的视口动态地名标签渲染机制
     function updateLearnModeViewportTooltips() {
       if (appMode !== 'learn') return;
       
@@ -880,7 +937,6 @@
       const bounds = map.getBounds();
       const existingCenters = new Set();
       
-      // 先记录现有的中心点，避免重复渲染
       learnTooltips.forEach(item => {
         existingCenters.add(item.lat + ',' + item.lng);
       });
@@ -897,7 +953,6 @@
           const key = center[0] + ',' + center[1];
           currentLatLngs.push(key);
 
-          // 如果视口内还没有这个标签，则动态创建
           if (!existingCenters.has(key)) {
             const tt = L.tooltip({
               permanent: true,
@@ -913,7 +968,6 @@
         }
       });
 
-      // 移除已经滑出视口的标签，释放浏览器内存与 DOM
       const activeTooltips = [];
       learnTooltips.forEach(item => {
         const key = item.lat + ',' + item.lng;
@@ -925,6 +979,28 @@
       });
 
       learnTooltips = activeTooltips.concat(newTooltips);
+    }
+
+    // 📢 底部居中 Toast 提示框
+    function showToast(message, type = 'info', duration = 2000) {
+      const toast = document.getElementById('quiz-toast');
+      if (toastTimer) clearTimeout(toastTimer);
+      
+      toast.innerText = message;
+      toast.className = 'quiz-toast ' + type;
+      toast.style.display = 'block';
+
+      if (duration > 0) {
+        toastTimer = setTimeout(() => {
+          toast.style.display = 'none';
+        }, duration);
+      }
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('quiz-toast');
+      toast.style.display = 'none';
+      if (toastTimer) clearTimeout(toastTimer);
     }
 
     function style(feature) {
@@ -1050,24 +1126,19 @@
         .replace(/ß/g, 'ss');
     }
 
-    function clearReviewTooltips() {
-      reviewTooltips.forEach(tt => map.removeLayer(tt));
-      reviewTooltips = [];
-    }
-
     function initCountrySession(country, mode) {
       currentCountry = country;
       appMode = mode;
       clearHighlightedLayers();
-      clearReviewTooltips();
       clearLearnTooltips();
+      hideToast();
+      map.closePopup();
       
       document.getElementById('home-view').classList.remove('active');
       document.getElementById('game-view').classList.add('active');
 
       const quizElems = document.querySelectorAll('.quiz-only');
       const learnElems = document.querySelectorAll('.learn-only');
-      const mapElem = document.getElementById('map');
 
       if (currentCountry === 'turkey') {
         map.setView([38.9637, 35.2433], 6);
@@ -1095,18 +1166,9 @@
         else if (currentCountry === 'japan') targetZoom = 7;
         
         map.setZoom(targetZoom);
-        
-        const threshold = getLabelZoomThreshold();
-        if (map.getZoom() >= threshold) {
-          mapElem.classList.remove('hide-labels');
-          setTimeout(updateLearnModeViewportTooltips, 100);
-        } else {
-          mapElem.classList.add('hide-labels');
-        }
       } else {
         quizElems.forEach(el => el.style.display = 'inline-block');
         learnElems.forEach(el => el.style.display = 'none');
-        mapElem.classList.add('hide-labels');
       }
 
       loadGeoJSONData();
@@ -1258,6 +1320,14 @@
           highlightedLayers.push(layer);
           layer.setStyle({ fillColor: '#f59e0b', fillOpacity: 0.6, weight: 3, color: '#fbbf24' });
           map.fitBounds(layer.getBounds(), { maxZoom: 9, animate: true });
+          
+          if (appMode === 'learn') {
+            const bounds = layer.getBounds();
+            L.popup()
+              .setLatLng(bounds.getCenter())
+              .setContent(`<div style="font-size:14px; font-weight:bold; padding: 2px 4px;">${name}</div>`)
+              .openOn(map);
+          }
         }
       });
     }
@@ -1285,8 +1355,9 @@
       resetGame();
       closeSettings();
       clearHighlightedLayers();
-      clearReviewTooltips();
       clearLearnTooltips();
+      hideToast();
+      map.closePopup();
       document.getElementById('game-over-modal').style.display = 'none';
       document.getElementById('game-view').classList.remove('active');
       document.getElementById('home-view').classList.add('active');
@@ -1341,8 +1412,8 @@
         return;
       }
 
-      clearReviewTooltips();
       clearLearnTooltips();
+      hideToast();
       if (geojsonLayer) {
         geojsonLayer.setStyle(style);
       }
@@ -1389,8 +1460,9 @@
       isPaused = false;
       isWaitingNext = false;
       clearHighlightedLayers();
-      clearReviewTooltips();
       clearLearnTooltips();
+      hideToast();
+      map.closePopup();
       document.getElementById('target-label').innerText = "--";
       document.getElementById('score-fraction').innerText = `${translations[currentLanguage].progress}: 0/${allFeatures.length}`;
       document.getElementById('time-val').innerText = translations[currentLanguage].noLimit;
@@ -1409,6 +1481,7 @@
       isWaitingNext = false;
       if (timerInterval) clearInterval(timerInterval);
       const t = translations[currentLanguage];
+      hideToast();
 
       saveHighScore(currentCountry, correctCount, totalQuestions);
 
@@ -1427,46 +1500,14 @@
       resetGame();
     }
 
-    /* 📌 错题回顾全图标签化功能 */
     function reviewWrongAnswers() {
       document.getElementById('game-over-modal').style.display = 'none';
-      clearReviewTooltips();
-      clearLearnTooltips();
-
-      document.getElementById('map').classList.remove('hide-labels');
+      hideToast();
 
       geojsonLayer.eachLayer(layer => {
         const val = getFeatureValue(layer.feature);
-        const center = getFeatureMainCenter(layer.feature);
-
         if (wrongAnswers.includes(val)) {
           layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.65, weight: 2, color: '#991b1b' });
-
-          if (center && val) {
-            const tt = L.tooltip({
-              permanent: true,
-              direction: 'center',
-              className: 'map-label-tooltip wrong-review-tooltip'
-            })
-            .setContent(String(val))
-            .setLatLng(center)
-            .addTo(map);
-
-            reviewTooltips.push(tt);
-          }
-        } else {
-          if (center && val) {
-            const tt = L.tooltip({
-              permanent: true,
-              direction: 'center',
-              className: 'map-label-tooltip'
-            })
-            .setContent(String(val))
-            .setLatLng(center)
-            .addTo(map);
-
-            reviewTooltips.push(tt);
-          }
         }
       });
     }
@@ -1484,6 +1525,10 @@
 
     function loadNextQuestion() {
       if (!isPlaying) return;
+      
+      // 🚀 进入下一题时，彻底重置并恢复所有多边形的默认样式，彻底根治红色残留问题
+      if (geojsonLayer) geojsonLayer.setStyle(style);
+
       if (currentQuestionIndex >= gameQuestions.length) {
         endGame(translations[currentLanguage].allCompleted);
         return;
@@ -1498,11 +1543,11 @@
       document.getElementById('target-label').innerText = currentTarget;
     }
 
+    // 🎯 错误达到上限时高亮显示正确答案所在格 1 秒
     function highlightCorrectAnswer() {
       geojsonLayer.eachLayer(layer => {
         if (getFeatureValue(layer.feature) === currentTarget) {
-          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.6 });
-          setTimeout(() => { geojsonLayer.resetStyle(layer); }, 1500);
+          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.75, weight: 3, color: '#991b1b' });
         }
       });
     }
@@ -1549,8 +1594,6 @@
     function onEachFeature(feature, layer) {
       const val = getFeatureValue(feature);
 
-      // 🚀 核心优化：学习模式下不再在 onEachFeature 里盲目全图绑定 Tooltip，而是交由上面的动态视口渲染器统一接管，彻底杜绝瞬间生成几千个 DOM 带来的严重卡顿
-
       layer.on({
         mouseover: (e) => {
           if (appMode === 'learn' || (isPlaying && !isPaused && !isWaitingNext)) {
@@ -1567,43 +1610,76 @@
           }
         },
         click: (e) => {
-          if (appMode === 'learn') return;
+          const t = translations[currentLanguage];
+
+          // 💡 学习模式（Learn Mode）：点击任意 Polygon 弹出小浮窗（Popup）
+          if (appMode === 'learn') {
+            if (val) {
+              L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`<div style="font-size:14px; font-weight:bold; padding: 2px 4px;">${val}</div>`)
+                .openOn(map);
+            }
+            return;
+          }
 
           if (!isPlaying || isPaused || isWaitingNext) return;
 
+          // 🎯 测验模式（Quiz Mode）点击逻辑
           if (val === currentTarget && val !== '') {
+            // ✅ 点击正确
             isWaitingNext = true; 
             correctCount++;
             currentQuestionIndex++;
             updateUI();
             
-            e.target.setStyle({ fillColor: '#16a34a', fillOpacity: 0.4 });
+            // 答对提示框（绿色 Toast）
+            showToast(t.correctText, 'success', 600);
+            
+            e.target.setStyle({ fillColor: '#16a34a', fillOpacity: 0.6 });
             setTimeout(() => {
               if (isPlaying) {
-                geojsonLayer.resetStyle(e.target);
+                hideToast();
                 loadNextQuestion();
               }
-            }, 800);
+            }, 600);
 
           } else {
+            // ❌ 点击错误
             currentMistakes++;
             updateUI();
 
-            if (currentMistakes >= maxMistakes) {
+            // 点击选错的多边形闪烁红色
+            e.target.setStyle({ fillColor: '#ef4444', fillOpacity: 0.6 });
+
+            if (currentMistakes < maxMistakes) {
+              // 1. 点击错误且未达上限：底部提示框显示 “选错了，这个是：XXX”
+              showToast(`${t.wrongText}${val || '--'}`, 'error', 1200);
+              
+              // 提示结束后恢复该多边形正常颜色
+              setTimeout(() => {
+                if (isPlaying && !isWaitingNext) {
+                  geojsonLayer.resetStyle(e.target);
+                }
+              }, 800);
+            } else {
+              // 2. 失误达到上限：底部提示框显示 “失误达到上限了，正确答案是：XXX”，正确格高亮标红 1 秒后自动下一题
               isWaitingNext = true; 
 
               if (!wrongAnswers.includes(currentTarget)) {
                 wrongAnswers.push(currentTarget);
               }
 
+              showToast(`${t.maxMistakesText}${currentTarget}`, 'error', 1000);
               highlightCorrectAnswer();
               currentQuestionIndex++;
               
               setTimeout(() => {
                 if (isPlaying) {
+                  hideToast();
                   loadNextQuestion();
                 }
-              }, 1500);
+              }, 1000);
             }
           }
         }

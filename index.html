@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geo Quiz - 首页</title>
+  <title>Geo Quiz</title>
   <!-- 引入 Leaflet 地图样式库 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -46,7 +46,7 @@
       padding: 0; 
       width: 100vw; 
       height: 100vh;
-      font-family: sans-serif; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       background-color: var(--bg-color) !important; 
       display: flex; 
       justify-content: center; 
@@ -98,6 +98,12 @@
       margin: 0;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .quiz-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -114,7 +120,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 190px;
+      height: 195px;
       box-sizing: border-box;
     }
 
@@ -127,7 +133,8 @@
     .quiz-card h3 {
       margin: 0 0 15px 0;
       color: var(--topbar-text);
-      font-size: 20px;
+      font-size: 19px;
+      line-height: 1.3;
     }
 
     .card-actions {
@@ -140,7 +147,7 @@
       background: var(--target-color);
       color: white;
       border: none;
-      padding: 10px;
+      padding: 10px 6px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
@@ -163,9 +170,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 20px;
+      padding: 0 16px;
       border-bottom: 2px solid var(--border-color);
-      font-size: 16px;
+      font-size: 15px;
       flex-shrink: 0;
       position: relative;
     }
@@ -184,11 +191,12 @@
     .stat-badge {
       background: var(--badge-bg);
       color: var(--badge-text);
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 8px;
       font-weight: bold;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       font-size: 13px;
+      white-space: nowrap;
     }
 
     .target-prompt {
@@ -201,14 +209,14 @@
     }
     .target-prompt span {
       background: var(--target-box-bg);
-      padding: 6px 20px;
+      padding: 6px 18px;
       border-radius: 10px;
       color: var(--target-color);
       border: 1px solid var(--border-color);
-      font-size: 24px; 
+      font-size: 22px; 
       font-weight: bold;
-      letter-spacing: 1px;
-      max-width: 350px;
+      letter-spacing: 0.5px;
+      max-width: 320px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -273,17 +281,20 @@
       background: var(--badge-bg);
       color: var(--badge-text);
       border: none;
-      width: 38px;
+      min-width: 38px;
       height: 38px;
+      padding: 0 8px;
       border-radius: 8px;
-      font-size: 18px;
+      font-size: 14px;
+      font-weight: bold;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.2s, transform 0.2s;
+      white-space: nowrap;
     }
-    .icon-btn:hover { background: #cbd5e1; transform: scale(1.05); }
+    .icon-btn:hover { background: #cbd5e1; transform: scale(1.03); }
     body.dark-mode .icon-btn:hover { background: #374151; }
 
     #map {
@@ -291,40 +302,34 @@
       width: 100%;
     }
 
-    #feedback-banner {
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      display: none;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-
-    /* 🎯 学习模式专属徽章气泡样式 */
+    /* 🎯 气泡样式 */
     .map-label-tooltip {
-      background: rgba(255, 255, 255, 0.9) !important;
+      background: rgba(255, 255, 255, 0.92) !important;
       border: 1px solid #cbd5e1 !important;
       border-radius: 4px !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
       font-weight: bold;
       font-size: 10px;
       color: #0f172a;
-      padding: 1px 4px !important;
+      padding: 1px 5px !important;
       pointer-events: none;
     }
     body.dark-mode .map-label-tooltip {
-      background: rgba(17, 24, 39, 0.85) !important;
+      background: rgba(17, 24, 39, 0.88) !important;
       border: 1px solid #374151 !important;
       color: #f8fafc;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
     }
+
+    /* 错题回顾状态下的气泡显眼样式 */
+    .wrong-review-tooltip {
+      background: #dc2626 !important;
+      color: #ffffff !important;
+      border: 1px solid #991b1b !important;
+      font-weight: bold;
+      z-index: 1000 !important;
+    }
+
     .hide-labels .leaflet-tooltip.map-label-tooltip {
       display: none !important;
     }
@@ -342,12 +347,13 @@
     .modal-box {
       background: var(--container-bg);
       color: var(--topbar-text);
-      padding: 25px 35px;
+      padding: 25px 30px;
       border-radius: 16px;
       text-align: center;
       border: 1px solid var(--border-color);
       box-shadow: 0 15px 35px rgba(0,0,0,0.3);
       width: 360px;
+      box-sizing: border-box;
     }
     .modal-box h2 { margin-top: 0; font-size: 20px; }
     
@@ -394,6 +400,7 @@
     .btn:hover { opacity: 0.9; }
     .btn-start { background: #008751; }
     .btn-restart { background: #dc2626; }
+    .btn-review { background: #ea580c; }
     .btn-close { background: #4b5563; }
     .btn-home { background: #334155; }
   </style>
@@ -406,43 +413,46 @@
   <div id="home-view" class="view-container active">
     <div class="home-header">
       <h1 class="home-title">🌍 Geo Quiz</h1>
-      <button class="icon-btn" id="theme-toggle-home" onclick="toggleTheme()" title="切换明暗模式">🌙</button>
+      <div class="header-actions">
+        <button class="icon-btn" id="lang-toggle-home" onclick="toggleLanguage()" title="Switch Language / 切换语言">🌐 EN</button>
+        <button class="icon-btn" id="theme-toggle-home" onclick="toggleTheme()" title="Theme / 模式">🌙</button>
+      </div>
     </div>
     
     <div class="quiz-grid">
       <!-- 巴西区号卡片 -->
       <div class="quiz-card">
-        <h3>🇧🇷 巴西区号</h3>
+        <h3 id="card-title-brazil">🇧🇷 Brazil Area Code</h3>
         <div class="card-actions">
-          <button class="card-btn" onclick="initCountrySession('brazil', 'quiz')">测验模式</button>
-          <button class="card-btn card-btn-learn" onclick="initCountrySession('brazil', 'learn')">学习模式</button>
+          <button class="card-btn card-btn-test" onclick="initCountrySession('brazil', 'quiz')">Test</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('brazil', 'learn')">Learn</button>
         </div>
       </div>
 
       <!-- 土耳其行政区卡片 -->
       <div class="quiz-card">
-        <h3>🇹🇷 土耳其行政区</h3>
+        <h3 id="card-title-turkey">🇹🇷 Turkey İlçeleri</h3>
         <div class="card-actions">
-          <button class="card-btn" onclick="initCountrySession('turkey', 'quiz')">测验模式</button>
-          <button class="card-btn card-btn-learn" onclick="initCountrySession('turkey', 'learn')">学习模式</button>
+          <button class="card-btn card-btn-test" onclick="initCountrySession('turkey', 'quiz')">Test</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('turkey', 'learn')">Learn</button>
         </div>
       </div>
 
-      <!-- 🇩🇪 德国郡县卡片 -->
+      <!-- 德国郡县卡片 -->
       <div class="quiz-card">
-        <h3>🇩🇪 德国郡县</h3>
+        <h3 id="card-title-germany">🇩🇪 German Landkreis</h3>
         <div class="card-actions">
-          <button class="card-btn" onclick="initCountrySession('germany', 'quiz')">测验模式</button>
-          <button class="card-btn card-btn-learn" onclick="initCountrySession('germany', 'learn')">学习模式</button>
+          <button class="card-btn card-btn-test" onclick="initCountrySession('germany', 'quiz')">Test</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('germany', 'learn')">Learn</button>
         </div>
       </div>
 
-      <!-- 🇮🇩 印尼行政区卡片 -->
+      <!-- 印尼行政区卡片 -->
       <div class="quiz-card">
-        <h3>🇮🇩 印尼行政区</h3>
+        <h3 id="card-title-indonesia">🇮🇩 Indonesia Kota & Kabupaten</h3>
         <div class="card-actions">
-          <button class="card-btn" onclick="initCountrySession('indonesia', 'quiz')">测验模式</button>
-          <button class="card-btn card-btn-learn" onclick="initCountrySession('indonesia', 'learn')">学习模式</button>
+          <button class="card-btn card-btn-test" onclick="initCountrySession('indonesia', 'quiz')">Test</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('indonesia', 'learn')">Learn</button>
         </div>
       </div>
     </div>
@@ -457,104 +467,103 @@
         <!-- 学习模式左上角：颜色与边界自定义下拉菜单 -->
         <div class="learn-only stat-badge" id="learn-polygon-toggle-wrap" style="display:none; display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 13px;">
           <div>
-            填充: 
+            <span id="label-learn-fill">Fill:</span> 
             <select id="learn-fill-color" onchange="togglePolygonVisibility()" style="padding: 2px 4px; background: var(--target-box-bg); color: var(--topbar-text); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer;">
-              <option value="default">默认</option>
-              <option value="transparent">无 (透明)</option>
-              <option value="#ef4444">红</option>
-              <option value="#3b82f6">蓝</option>
-              <option value="#eab308">黄</option>
-              <option value="#22c55e">绿</option>
-              <option value="#06b6d4">青</option>
-              <option value="#a855f7">紫</option>
-              <option value="#000000">黑</option>
-              <option value="#ffffff">白</option>
+              <option value="default">Default</option>
+              <option value="transparent">None</option>
+              <option value="#ef4444">Red</option>
+              <option value="#3b82f6">Blue</option>
+              <option value="#eab308">Yellow</option>
+              <option value="#22c55e">Green</option>
+              <option value="#06b6d4">Cyan</option>
+              <option value="#a855f7">Purple</option>
+              <option value="#000000">Black</option>
+              <option value="#ffffff">White</option>
             </select>
           </div>
           <div>
-            边界: 
+            <span id="label-learn-border">Border:</span> 
             <select id="learn-border-color" onchange="togglePolygonVisibility()" style="padding: 2px 4px; background: var(--target-box-bg); color: var(--topbar-text); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer;">
-              <option value="default">默认</option>
-              <option value="transparent">无 (隐藏)</option>
-              <option value="#ef4444">红</option>
-              <option value="#3b82f6">蓝</option>
-              <option value="#eab308">黄</option>
-              <option value="#22c55e">绿</option>
-              <option value="#06b6d4">青</option>
-              <option value="#a855f7">紫</option>
-              <option value="#000000">黑</option>
-              <option value="#ffffff">白</option>
+              <option value="default">Default</option>
+              <option value="transparent">None</option>
+              <option value="#ef4444">Red</option>
+              <option value="#3b82f6">Blue</option>
+              <option value="#eab308">Yellow</option>
+              <option value="#22c55e">Green</option>
+              <option value="#06b6d4">Cyan</option>
+              <option value="#a855f7">Purple</option>
+              <option value="#000000">Black</option>
+              <option value="#ffffff">White</option>
             </select>
           </div>
         </div>
-        <div class="quiz-only stat-badge" id="score-fraction">进度: 0/0</div>
-        <div class="quiz-only stat-badge" id="mistake-badge">失误: 0/<span id="max-mistake-display">2</span></div>
+        <div class="quiz-only stat-badge" id="score-fraction">Progress: 0/0</div>
+        <div class="quiz-only stat-badge" id="mistake-badge">Mistakes: 0/<span id="max-mistake-display">2</span></div>
       </div>
       
       <div class="target-prompt">
         <span class="quiz-only" id="target-label">--</span>
         <!-- 🔍 搜索框 -->
         <div class="learn-only search-container" id="search-box-wrapper" style="display:none;">
-          <input class="search-input" id="search-code-input" type="text" placeholder="🔍 输入名称搜索 (↑↓选择, Enter搜索)..." oninput="updateSearchSuggestions(this.value)" onkeydown="handleSearchKeyDown(event)" autocomplete="off">
+          <input class="search-input" id="search-code-input" type="text" placeholder="🔍 Search name..." oninput="updateSearchSuggestions(this.value)" onkeydown="handleSearchKeyDown(event)" autocomplete="off">
           <div class="search-dropdown" id="search-dropdown"></div>
         </div>
       </div>
 
       <div class="top-right">
-        <div class="quiz-only stat-badge" id="time-val" style="color: #ef4444;">不限时</div>
-        <button class="icon-btn" id="theme-toggle-game" onclick="toggleTheme()" title="切换明暗模式">🌙</button>
-        <button class="icon-btn quiz-only" onclick="toggleSettings()" title="游戏设置与控制">⚙️</button>
-        <button class="icon-btn learn-only" onclick="returnToHome()" title="返回主页" style="display:none;">🏠</button>
+        <div class="quiz-only stat-badge" id="time-val" style="color: #ef4444;">No limit</div>
+        <button class="icon-btn" id="lang-toggle-game" onclick="toggleLanguage()">🌐 EN</button>
+        <button class="icon-btn" id="theme-toggle-game" onclick="toggleTheme()" title="Theme / 模式">🌙</button>
+        <button class="icon-btn quiz-only" onclick="toggleSettings()" title="Settings / 设置">⚙️</button>
+        <button class="icon-btn learn-only" onclick="returnToHome()" title="Home / 主页" style="display:none;">🏠</button>
       </div>
     </div>
 
     <div id="map" class="hide-labels"></div>
   </div>
 
-  <div id="feedback-banner"></div>
-
   <!-- ⚙️ 设置与控制弹窗面板 -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box" style="text-align: left;">
-      <h2>⚙️ 游戏设置与控制</h2>
+      <h2 id="settings-title">⚙️ Game Settings</h2>
       
       <div style="margin: 15px 0;">
         <div class="setting-row">
-          <label>倒计时时长(秒):</label>
-          <input type="number" id="setting-time" value="0" min="0" max="3600" title="设为0代表不限时">
+          <label id="label-setting-time">Timer Duration (s):</label>
+          <input type="number" id="setting-time" value="0" min="0" max="3600">
         </div>
         <div class="setting-row">
-          <label>单题最大错误数:</label>
+          <label id="label-setting-mistakes">Max Mistakes / Q:</label>
           <input type="number" id="setting-mistakes" value="2" min="1" max="10">
         </div>
         <div class="setting-row">
-          <label for="setting-fill-color">多边形填充颜色:</label>
+          <label for="setting-fill-color" id="label-setting-fill">Fill Color:</label>
           <select id="setting-fill-color" onchange="togglePolygonVisibility()">
-            <option value="default">默认</option>
-            <option value="transparent">无 (透明)</option>
-            <option value="#ef4444">红</option>
-            <option value="#3b82f6">蓝</option>
-            <option value="#eab308">黄</option>
-            <option value="#22c55e">绿</option>
-            <option value="#06b6d4">青</option>
-            <option value="#a855f7">紫</option>
-            <option value="#000000">黑</option>
-            <option value="#ffffff">白</option>
+            <option value="default" class="opt-default">Default</option>
+            <option value="transparent" class="opt-none">None</option>
+            <option value="#ef4444" class="opt-red">Red</option>
+            <option value="#3b82f6" class="opt-blue">Blue</option>
+            <option value="#eab308" class="opt-yellow">Yellow</option>
+            <option value="#22c55e" class="opt-green">Green</option>
+            <option value="#06b6d4" class="opt-cyan">Cyan</option>
+            <option value="#a855f7" class="opt-purple">Purple</option>
+            <option value="#000000" class="opt-black">Black</option>
+            <option value="#ffffff" class="opt-white">White</option>
           </select>
         </div>
         <div class="setting-row">
-          <label for="setting-border-color">多边形边界颜色:</label>
+          <label for="setting-border-color" id="label-setting-border">Border Color:</label>
           <select id="setting-border-color" onchange="togglePolygonVisibility()">
-            <option value="default">默认</option>
-            <option value="transparent">无 (隐藏)</option>
-            <option value="#ef4444">红</option>
-            <option value="#3b82f6">蓝</option>
-            <option value="#eab308">黄</option>
-            <option value="#22c55e">绿</option>
-            <option value="#06b6d4">青</option>
-            <option value="#a855f7">紫</option>
-            <option value="#000000">黑</option>
-            <option value="#ffffff">白</option>
+            <option value="default" class="opt-default">Default</option>
+            <option value="transparent" class="opt-none">None</option>
+            <option value="#ef4444" class="opt-red">Red</option>
+            <option value="#3b82f6" class="opt-blue">Blue</option>
+            <option value="#eab308" class="opt-yellow">Yellow</option>
+            <option value="#22c55e" class="opt-green">Green</option>
+            <option value="#06b6d4" class="opt-cyan">Cyan</option>
+            <option value="#a855f7" class="opt-purple">Purple</option>
+            <option value="#000000" class="opt-black">Black</option>
+            <option value="#ffffff" class="opt-white">White</option>
           </select>
         </div>
       </div>
@@ -568,10 +577,12 @@
   <!-- 🏆 游戏结束结算弹窗 -->
   <div class="modal-overlay" id="game-over-modal">
     <div class="modal-box">
-      <h2 id="modal-title" style="color: #008751;">游戏结束</h2>
-      <p style="font-size: 18px; margin: 15px 0;">最终成绩：<span id="final-score" style="color: #008751; font-weight: bold;">(0/0)</span></p>
-      <p style="font-size: 14px; color: #6b7280; margin-bottom: 25px;">总错误次数：<span id="final-mistakes">0</span> 次</p>
-      <button class="btn btn-restart" onclick="closeModalAndRestart()" style="width: 100%;">重新开始</button>
+      <h2 id="modal-title" style="color: #008751;">Game Over</h2>
+      <p style="font-size: 19px; margin: 20px 0;"><span id="final-score-label">Final Score:</span> <span id="final-score" style="color: #008751; font-weight: bold;">(0/0)</span></p>
+      
+      <button class="btn btn-review" id="btn-review-wrong" onclick="reviewWrongAnswers()" style="display:none;">Review Mistakes</button>
+      <button class="btn btn-restart" id="btn-modal-restart" onclick="closeModalAndRestart()">Restart</button>
+      <button class="btn btn-home" id="btn-modal-home" onclick="returnToHome()">Back to Home</button>
     </div>
   </div>
 
@@ -586,6 +597,7 @@
     });
     googleTile.addTo(map);
 
+    let currentLanguage = 'en'; // 🌐 默认语言: 'en' 或 'zh'
     let currentCountry = 'brazil'; 
     let allFeatures = [];
     let gameQuestions = []; 
@@ -595,17 +607,152 @@
     let totalQuestions = 0;
     let currentMistakes = 0;
     let maxMistakes = 2;
-    let totalMistakes = 0;
     let timeLeft = 0;
     let maxTime = 0;
     let timerInterval = null;
     let isPlaying = false;
     let isPaused = false;
+    let isWaitingNext = false; 
+    let wrongAnswers = [];     
+    let reviewTooltips = [];   
     let geojsonLayer = null;
     let appMode = 'quiz';
     
     let highlightedLayers = [];
     let selectedSuggestionIndex = -1;
+
+    // 🌐 多语言文本词典 (i18n)
+    const translations = {
+      en: {
+        langBtn: "🌐 EN",
+        cardBrazil: "🇧🇷 Brazil Area Code",
+        cardTurkey: "🇹🇷 Turkey İlçeleri",
+        cardGermany: "🇩🇪 German Landkreis",
+        cardIndonesia: "🇮🇩 Indonesia Kota & Kabupaten",
+        testBtn: "Test",
+        learnBtn: "Learn",
+        progress: "Progress",
+        mistakes: "Mistakes",
+        noLimit: "No limit",
+        searchPlaceholder: "🔍 Search name...",
+        notFound: "No matching area found",
+        settingsTitle: "⚙️ Game Settings",
+        timerDuration: "Timer Duration (s):",
+        maxMistakes: "Max Mistakes / Q:",
+        fillColor: "Fill Color:",
+        borderColor: "Border Color:",
+        startBtn: "Start Game",
+        restartBtn: "Restart",
+        backToGame: "Back to Game",
+        backToHome: "Back to Home",
+        gameOver: "Game Over",
+        allCompleted: "🏆 All Areas Completed!",
+        timeUp: "⏰ Time's Up! Game Over",
+        finalScore: "Final Score:",
+        reviewMistakes: "Review Mistakes",
+        fill: "Fill:",
+        border: "Border:",
+        optDefault: "Default",
+        optNone: "None",
+        optRed: "Red",
+        optBlue: "Blue",
+        optYellow: "Yellow",
+        optGreen: "Green",
+        optCyan: "Cyan",
+        optPurple: "Purple",
+        optBlack: "Black",
+        optWhite: "White"
+      },
+      zh: {
+        langBtn: "🌐 中文",
+        cardBrazil: "🇧🇷 巴西区号",
+        cardTurkey: "🇹🇷 土耳其行政区",
+        cardGermany: "🇩🇪 德国郡县",
+        cardIndonesia: "🇮🇩 印尼行政区",
+        testBtn: "测验模式",
+        learnBtn: "学习模式",
+        progress: "进度",
+        mistakes: "失误",
+        noLimit: "不限时",
+        searchPlaceholder: "🔍 输入名称搜索...",
+        notFound: "未找到匹配区域",
+        settingsTitle: "⚙️ 游戏设置与控制",
+        timerDuration: "倒计时时长(秒):",
+        maxMistakes: "单题最大错误数:",
+        fillColor: "多边形填充颜色:",
+        borderColor: "多边形边界颜色:",
+        startBtn: "开始游戏",
+        restartBtn: "重新开始",
+        backToGame: "返回游戏",
+        backToHome: "返回主页",
+        gameOver: "游戏结束",
+        allCompleted: "🏆 恭喜通关所有区域！",
+        timeUp: "⏰ 时间到！游戏结束",
+        finalScore: "最终成绩：",
+        reviewMistakes: "回顾错题",
+        fill: "填充:",
+        border: "边界:",
+        optDefault: "默认",
+        optNone: "无 (隐藏/透明)",
+        optRed: "红",
+        optBlue: "蓝",
+        optYellow: "黄",
+        optGreen: "绿",
+        optCyan: "青",
+        optPurple: "紫",
+        optBlack: "黑",
+        optWhite: "白"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+      applyLanguage();
+    }
+
+    function applyLanguage() {
+      const t = translations[currentLanguage];
+      
+      document.getElementById('lang-toggle-home').innerText = t.langBtn;
+      document.getElementById('lang-toggle-game').innerText = t.langBtn;
+      
+      document.getElementById('card-title-brazil').innerText = t.cardBrazil;
+      document.getElementById('card-title-turkey').innerText = t.cardTurkey;
+      document.getElementById('card-title-germany').innerText = t.cardGermany;
+      document.getElementById('card-title-indonesia').innerText = t.cardIndonesia;
+      
+      document.querySelectorAll('.card-btn-test').forEach(el => el.innerText = t.testBtn);
+      document.querySelectorAll('.card-btn-learn').forEach(el => el.innerText = t.learnBtn);
+      
+      document.getElementById('search-code-input').placeholder = t.searchPlaceholder;
+      document.getElementById('label-learn-fill').innerText = t.fill;
+      document.getElementById('label-learn-border').innerText = t.border;
+      
+      document.getElementById('settings-title').innerText = t.settingsTitle;
+      document.getElementById('label-setting-time').innerText = t.timerDuration;
+      document.getElementById('label-setting-mistakes').innerText = t.maxMistakes;
+      document.getElementById('label-setting-fill').innerText = t.fillColor;
+      document.getElementById('label-setting-border').innerText = t.borderColor;
+      
+      document.getElementById('final-score-label').innerText = t.finalScore;
+      document.getElementById('btn-modal-restart').innerText = t.restartBtn;
+      document.getElementById('btn-modal-home').innerText = t.backToHome;
+
+      // 下拉菜单选项翻译
+      document.querySelectorAll('.opt-default').forEach(el => el.innerText = t.optDefault);
+      document.querySelectorAll('.opt-none').forEach(el => el.innerText = t.optNone);
+      document.querySelectorAll('.opt-red').forEach(el => el.innerText = t.optRed);
+      document.querySelectorAll('.opt-blue').forEach(el => el.innerText = t.optBlue);
+      document.querySelectorAll('.opt-yellow').forEach(el => el.innerText = t.optYellow);
+      document.querySelectorAll('.opt-green').forEach(el => el.innerText = t.optGreen);
+      document.querySelectorAll('.opt-cyan').forEach(el => el.innerText = t.optCyan);
+      document.querySelectorAll('.opt-purple').forEach(el => el.innerText = t.optPurple);
+      document.querySelectorAll('.opt-black').forEach(el => el.innerText = t.optBlack);
+      document.querySelectorAll('.opt-white').forEach(el => el.innerText = t.optWhite);
+
+      updateUI();
+      updateSettingsButtons();
+    }
 
     map.on('zoomend', () => {
       const currentZoom = map.getZoom();
@@ -735,10 +882,16 @@
         .replace(/ß/g, 'ss');
     }
 
+    function clearReviewTooltips() {
+      reviewTooltips.forEach(tt => map.removeLayer(tt));
+      reviewTooltips = [];
+    }
+
     function initCountrySession(country, mode) {
       currentCountry = country;
       appMode = mode;
       clearHighlightedLayers();
+      clearReviewTooltips();
       
       document.getElementById('home-view').classList.remove('active');
       document.getElementById('game-view').classList.add('active');
@@ -788,7 +941,7 @@
 
       fetch(filename)
         .then(response => {
-          if (!response.ok) throw new Error(`找不到对应文件 ${filename}！请确认已正确上传。`);
+          if (!response.ok) throw new Error(`Data file ${filename} missing!`);
           return response.json();
         })
         .then(data => {
@@ -811,6 +964,7 @@
     function updateSearchSuggestions(query) {
       const cleanQuery = normalizeStr(query.trim());
       const dropdown = document.getElementById('search-dropdown');
+      const t = translations[currentLanguage];
       selectedSuggestionIndex = -1;
       
       if (!cleanQuery) {
@@ -828,7 +982,7 @@
       });
 
       if (matches.length === 0) {
-        dropdown.innerHTML = `<div class="dropdown-item" style="color: #9ca3af; cursor: default;">未找到相关地名</div>`;
+        dropdown.innerHTML = `<div class="dropdown-item" style="color: #9ca3af; cursor: default;">${t.notFound}</div>`;
         dropdown.style.display = 'block';
         return;
       }
@@ -902,11 +1056,7 @@
 
       if (matchCount > 0) {
         map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10, animate: true });
-        showFeedback(`🔍 找到了 ${matchCount} 个匹配区域`, "#0284c7");
-      } else {
-        showFeedback(`❌ 未找到匹配区域`, "#ef4444");
       }
-      setTimeout(hideFeedback, 2500);
     }
 
     function selectSearchResult(name) {
@@ -920,8 +1070,6 @@
           highlightedLayers.push(layer);
           layer.setStyle({ fillColor: '#f59e0b', fillOpacity: 0.6, weight: 3, color: '#fbbf24' });
           map.fitBounds(layer.getBounds(), { maxZoom: 9, animate: true });
-          showFeedback(`📍 ${val}`, "#0284c7");
-          setTimeout(hideFeedback, 2000);
         }
       });
     }
@@ -949,6 +1097,7 @@
       resetGame();
       closeSettings();
       clearHighlightedLayers();
+      clearReviewTooltips();
       document.getElementById('game-over-modal').style.display = 'none';
       document.getElementById('game-view').classList.remove('active');
       document.getElementById('home-view').classList.add('active');
@@ -974,17 +1123,18 @@
 
     function updateSettingsButtons() {
       const container = document.getElementById('settings-buttons-container');
+      const t = translations[currentLanguage];
       if (!isPlaying) {
         container.innerHTML = `
-          <button class="btn btn-start" onclick="initGame(); closeSettings();">开始游戏</button>
-          <button class="btn btn-close" onclick="closeSettings()">返回游戏</button>
-          <button class="btn btn-home" onclick="returnToHome()">返回主页</button>
+          <button class="btn btn-start" onclick="initGame(); closeSettings();">${t.startBtn}</button>
+          <button class="btn btn-close" onclick="closeSettings()">${t.backToGame}</button>
+          <button class="btn btn-home" onclick="returnToHome()">${t.backToHome}</button>
         `;
       } else {
         container.innerHTML = `
-          <button class="btn btn-restart" onclick="initGame(); closeSettings();">重新开始</button>
-          <button class="btn btn-close" onclick="closeSettings()">返回游戏</button>
-          <button class="btn btn-home" onclick="returnToHome()">返回主页</button>
+          <button class="btn btn-restart" onclick="initGame(); closeSettings();">${t.restartBtn}</button>
+          <button class="btn btn-close" onclick="closeSettings()">${t.backToGame}</button>
+          <button class="btn btn-home" onclick="returnToHome()">${t.backToHome}</button>
         `;
       }
     }
@@ -995,10 +1145,11 @@
       document.getElementById('max-mistake-display').innerText = maxMistakes;
 
       if (allFeatures.length === 0) {
-        alert('地图数据尚未加载完成！');
+        alert('Map data is loading...');
         return;
       }
 
+      clearReviewTooltips();
       if (geojsonLayer) {
         geojsonLayer.setStyle(style);
       }
@@ -1010,25 +1161,26 @@
       currentQuestionIndex = 0;
       correctCount = 0;
       currentMistakes = 0;
-      totalMistakes = 0;
+      wrongAnswers = [];
       timeLeft = maxTime;
       isPlaying = true;
       isPaused = false;
+      isWaitingNext = false;
 
       updateUI();
-      hideFeedback();
       document.getElementById('game-over-modal').style.display = 'none';
 
       if (timerInterval) clearInterval(timerInterval);
       
       if (maxTime > 0) {
+        const t = translations[currentLanguage];
         timerInterval = setInterval(() => {
           if (!isPaused && isPlaying) {
             timeLeft--;
-            document.getElementById('time-val').innerText = timeLeft + "秒";
+            document.getElementById('time-val').innerText = timeLeft + (currentLanguage === 'zh' ? '秒' : 's');
             if (timeLeft <= 0) {
               clearInterval(timerInterval);
-              endGame("⏰ 时间到！游戏结束");
+              endGame(t.timeUp);
             }
           }
         }, 1000);
@@ -1042,12 +1194,13 @@
       if (timerInterval) clearInterval(timerInterval);
       isPlaying = false;
       isPaused = false;
+      isWaitingNext = false;
       clearHighlightedLayers();
+      clearReviewTooltips();
       document.getElementById('target-label').innerText = "--";
-      hideFeedback();
-      document.getElementById('score-fraction').innerText = `进度: 0/${allFeatures.length}`;
-      document.getElementById('time-val').innerText = "不限时";
-      document.getElementById('mistake-badge').innerHTML = `失误: 0/<span id="max-mistake-display">${document.getElementById('setting-mistakes').value}</span>`;
+      document.getElementById('score-fraction').innerText = `${translations[currentLanguage].progress}: 0/${allFeatures.length}`;
+      document.getElementById('time-val').innerText = translations[currentLanguage].noLimit;
+      document.getElementById('mistake-badge').innerHTML = `${translations[currentLanguage].mistakes}: 0/<span id="max-mistake-display">${document.getElementById('setting-mistakes').value}</span>`;
       if (geojsonLayer) geojsonLayer.setStyle(style);
       updateSettingsButtons();
     }
@@ -1059,43 +1212,91 @@
 
     function endGame(titleText) {
       isPlaying = false;
+      isWaitingNext = false;
       if (timerInterval) clearInterval(timerInterval);
+      const t = translations[currentLanguage];
+
       document.getElementById('modal-title').innerText = titleText;
       document.getElementById('final-score').innerText = `(${correctCount}/${totalQuestions})`;
-      document.getElementById('final-mistakes').innerText = totalMistakes;
+      
+      const reviewBtn = document.getElementById('btn-review-wrong');
+      if (wrongAnswers.length > 0) {
+        reviewBtn.innerText = `${t.reviewMistakes} (${wrongAnswers.length})`;
+        reviewBtn.style.display = 'block';
+      } else {
+        reviewBtn.style.display = 'none';
+      }
+
       document.getElementById('game-over-modal').style.display = 'flex';
       resetGame();
     }
 
+    /* 📌 错题回顾全图标签化功能 */
+    function reviewWrongAnswers() {
+      document.getElementById('game-over-modal').style.display = 'none';
+      clearReviewTooltips();
+
+      // 强制在回顾模式下展示所有标签
+      document.getElementById('map').classList.remove('hide-labels');
+
+      geojsonLayer.eachLayer(layer => {
+        const val = getFeatureValue(layer.feature);
+        const center = getFeatureMainCenter(layer.feature);
+
+        if (wrongAnswers.includes(val)) {
+          // 错题：红色突出显示 + 错题样式标签
+          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.65, weight: 2, color: '#991b1b' });
+
+          if (center && val) {
+            const tt = L.tooltip({
+              permanent: true,
+              direction: 'center',
+              className: 'map-label-tooltip wrong-review-tooltip'
+            })
+            .setContent(String(val))
+            .setLatLng(center)
+            .addTo(map);
+
+            reviewTooltips.push(tt);
+          }
+        } else {
+          // 其它正常区域：同样带上普通地名标签
+          if (center && val) {
+            const tt = L.tooltip({
+              permanent: true,
+              direction: 'center',
+              className: 'map-label-tooltip'
+            })
+            .setContent(String(val))
+            .setLatLng(center)
+            .addTo(map);
+
+            reviewTooltips.push(tt);
+          }
+        }
+      });
+    }
+
     function updateUI() {
-      document.getElementById('score-fraction').innerText = `进度: ${correctCount}/${totalQuestions}`;
+      const t = translations[currentLanguage];
+      document.getElementById('score-fraction').innerText = `${t.progress}: ${correctCount}/${totalQuestions}`;
       if (maxTime > 0) {
-        document.getElementById('time-val').innerText = timeLeft + "秒";
+        document.getElementById('time-val').innerText = timeLeft + (currentLanguage === 'zh' ? '秒' : 's');
       } else {
-        document.getElementById('time-val').innerText = "不限时";
+        document.getElementById('time-val').innerText = t.noLimit;
       }
-      document.getElementById('mistake-badge').innerHTML = `失误: ${currentMistakes}/<span id="max-mistake-display">${maxMistakes}</span>`;
-    }
-
-    function showFeedback(text, color) {
-      const banner = document.getElementById('feedback-banner');
-      banner.innerText = text;
-      banner.style.background = color;
-      banner.style.display = 'block';
-    }
-
-    function hideFeedback() {
-      document.getElementById('feedback-banner').style.display = 'none';
+      document.getElementById('mistake-badge').innerHTML = `${t.mistakes}: ${currentMistakes}/<span id="max-mistake-display">${maxMistakes}</span>`;
     }
 
     function loadNextQuestion() {
       if (!isPlaying) return;
       if (currentQuestionIndex >= gameQuestions.length) {
-        endGame("🏆 恭喜通关所有区域！");
+        endGame(translations[currentLanguage].allCompleted);
         return;
       }
 
       currentMistakes = 0;
+      isWaitingNext = false; 
       updateUI();
 
       const currentFeature = gameQuestions[currentQuestionIndex];
@@ -1106,7 +1307,7 @@
     function highlightCorrectAnswer() {
       geojsonLayer.eachLayer(layer => {
         if (getFeatureValue(layer.feature) === currentTarget) {
-          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.5 });
+          layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.6 });
           setTimeout(() => { geojsonLayer.resetStyle(layer); }, 1500);
         }
       });
@@ -1155,7 +1356,7 @@
       const val = getFeatureValue(feature);
       const mainCenter = getFeatureMainCenter(feature);
 
-      // 🛡️ 严格确保：只有在学习模式 (learn) 下才渲染地名气泡标签，测验模式 (quiz) 下绝对不渲染任何标签！
+      // 学习模式下渲染标签
       if (appMode === 'learn' && mainCenter && val) {
         L.tooltip({
           permanent: true,
@@ -1169,30 +1370,27 @@
 
       layer.on({
         mouseover: (e) => {
-          if (appMode === 'learn' || (isPlaying && !isPaused)) {
+          if (appMode === 'learn' || (isPlaying && !isPaused && !isWaitingNext)) {
             if (!highlightedLayers.includes(e.target)) {
               e.target.setStyle({ fillOpacity: 0.35 });
             }
           }
         },
         mouseout: (e) => {
-          if (appMode === 'learn' || (isPlaying && !isPaused)) {
+          if (appMode === 'learn' || (isPlaying && !isPaused && !isWaitingNext)) {
             if (!highlightedLayers.includes(e.target)) {
               geojsonLayer.resetStyle(e.target);
             }
           }
         },
         click: (e) => {
-          if (appMode === 'learn') {
-            showFeedback(`📍 ${val || '未知区域'}`, "#0284c7");
-            setTimeout(hideFeedback, 1500);
-            return;
-          }
+          if (appMode === 'learn') return;
 
-          if (!isPlaying || isPaused) return;
+          // 🔒 游戏已被清空、暂停或处于下一题等待倒计时中，拒绝点击
+          if (!isPlaying || isPaused || isWaitingNext) return;
 
           if (val === currentTarget && val !== '') {
-            showFeedback(`🎉 答对了！${val}`, "#16a34a");
+            isWaitingNext = true; // 锁定点击
             correctCount++;
             currentQuestionIndex++;
             updateUI();
@@ -1202,33 +1400,36 @@
               if (isPlaying) {
                 geojsonLayer.resetStyle(e.target);
                 loadNextQuestion();
-                hideFeedback();
               }
             }, 800);
 
           } else {
             currentMistakes++;
-            totalMistakes++;
             updateUI();
 
             if (currentMistakes >= maxMistakes) {
-              showFeedback(`❌ 错误次数达上限！正确是: ${currentTarget}`, "#dc2626");
-              highlightCorrectAnswer();
+              isWaitingNext = true; // 🔒 达到错误上限立即锁定点击
 
+              if (!wrongAnswers.includes(currentTarget)) {
+                wrongAnswers.push(currentTarget);
+              }
+
+              highlightCorrectAnswer();
               currentQuestionIndex++;
+              
               setTimeout(() => {
                 if (isPlaying) {
                   loadNextQuestion();
-                  hideFeedback();
                 }
               }, 1500);
-            } else {
-              showFeedback(`❌ 猜错了（${currentMistakes}/${maxMistakes}次），你点的是: ${val || '未知区域'}`, "#ea580c");
             }
           }
         }
       });
     }
+
+    // 🚀 初始化应用语言呈现
+    applyLanguage();
   </script>
 </body>
 </html>

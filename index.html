@@ -106,8 +106,8 @@
 
     .quiz-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
       width: 100%;
     }
 
@@ -115,7 +115,7 @@
       background: var(--target-box-bg);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 20px;
+      padding: 18px;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       display: flex;
       flex-direction: column;
@@ -133,7 +133,7 @@
     .quiz-card h3 {
       margin: 0 0 10px 0;
       color: var(--topbar-text);
-      font-size: 19px;
+      font-size: 18px;
       line-height: 1.3;
     }
 
@@ -474,6 +474,18 @@
           <button class="card-btn card-btn-learn" onclick="initCountrySession('indonesia', 'learn')">Learn</button>
         </div>
       </div>
+
+      <!-- 🇯🇵 日本旧市町村 (1995) 卡片 -->
+      <div class="quiz-card">
+        <div>
+          <h3 id="card-title-japan">🇯🇵 Japan Old Municipalities (1995)</h3>
+          <div class="high-score-text" id="score-text-japan">High Score: --</div>
+        </div>
+        <div class="card-actions">
+          <button class="card-btn card-btn-test" onclick="initCountrySession('japan', 'quiz')">Test</button>
+          <button class="card-btn card-btn-learn" onclick="initCountrySession('japan', 'learn')">Learn</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -617,7 +629,7 @@
     });
     googleTile.addTo(map);
 
-    let currentLanguage = 'en'; // 🌐 默认语言: 'en' 或 'zh'
+    let currentLanguage = 'en'; 
     let currentCountry = 'brazil'; 
     let allFeatures = [];
     let gameQuestions = []; 
@@ -640,6 +652,7 @@
     
     let highlightedLayers = [];
     let selectedSuggestionIndex = -1;
+    let learnTooltips = []; // 🚀 用于动态管理学习模式下的气泡
 
     // --- 💾 本地持久化存储 (LocalStorage) ---
     function loadSavedSettings() {
@@ -679,7 +692,7 @@
     }
 
     function updateHighScoreDisplay() {
-      const countries = ['brazil', 'turkey', 'germany', 'indonesia'];
+      const countries = ['brazil', 'turkey', 'germany', 'indonesia', 'japan'];
       const highText = currentLanguage === 'zh' ? '最高分: ' : 'High Score: ';
       countries.forEach(c => {
         const el = document.getElementById('score-text-' + c);
@@ -697,6 +710,7 @@
         cardTurkey: "🇹🇷 Turkey İlçeleri",
         cardGermany: "🇩🇪 German Landkreis",
         cardIndonesia: "🇮🇩 Indonesia Kota & Kabupaten",
+        cardJapan: "🇯🇵 Japan Old Municipalities (1995)",
         testBtn: "Test",
         learnBtn: "Learn",
         progress: "Progress",
@@ -737,6 +751,7 @@
         cardTurkey: "🇹🇷 土耳其行政区",
         cardGermany: "🇩🇪 德国郡县",
         cardIndonesia: "🇮🇩 印尼行政区",
+        cardJapan: "🇯🇵 日本旧市町村 (1995)",
         testBtn: "测验模式",
         learnBtn: "学习模式",
         progress: "进度",
@@ -788,6 +803,7 @@
       document.getElementById('card-title-turkey').innerText = t.cardTurkey;
       document.getElementById('card-title-germany').innerText = t.cardGermany;
       document.getElementById('card-title-indonesia').innerText = t.cardIndonesia;
+      document.getElementById('card-title-japan').innerText = t.cardJapan;
       
       document.querySelectorAll('.card-btn-test').forEach(el => el.innerText = t.testBtn);
       document.querySelectorAll('.card-btn-learn').forEach(el => el.innerText = t.learnBtn);
@@ -806,7 +822,6 @@
       document.getElementById('btn-modal-restart').innerText = t.restartBtn;
       document.getElementById('btn-modal-home').innerText = t.backToHome;
 
-      // 下拉菜单选项翻译
       document.querySelectorAll('.opt-default').forEach(el => el.innerText = t.optDefault);
       document.querySelectorAll('.opt-none').forEach(el => el.innerText = t.optNone);
       document.querySelectorAll('.opt-red').forEach(el => el.innerText = t.optRed);
@@ -823,21 +838,94 @@
       updateSettingsButtons();
     }
 
-    map.on('zoomend', () => {
+    // 🚀 防卡顿优化：根据不同国家的精细程度，动态控制标签显现的最小缩放等级
+    function getLabelZoomThreshold() {
+      if (currentCountry === 'japan') return 10; // 日本市町村极密，放到 Zoom >= 10 才显示标签
+      if (currentCountry === 'turkey' || currentCountry === 'indonesia' || currentCountry === 'germany') return 7;
+      return 5;
+    }
+
+    map.on('zoomend moveend', () => {
       const currentZoom = map.getZoom();
       const mapElem = document.getElementById('map');
-      
-      let threshold = 5;
-      if (currentCountry === 'turkey') threshold = 8;
-      else if (currentCountry === 'indonesia') threshold = 7;
-      else if (currentCountry === 'germany') threshold = 7;
+      const threshold = getLabelZoomThreshold();
 
       if (currentZoom >= threshold) {
         mapElem.classList.remove('hide-labels');
+        if (appMode === 'learn') {
+          updateLearnModeViewportTooltips(); // 动态仅渲染视口内的标签
+        }
       } else {
         mapElem.classList.add('hide-labels');
+        clearLearnTooltips();
       }
     });
+
+    function clearLearnTooltips() {
+      learnTooltips.forEach(tt => map.removeLayer(tt));
+      learnTooltips = [];
+    }
+
+    // 🚀 核心防卡顿逻辑：只在当前地图可视区域（Viewport Bounds）内动态创建 Tooltip
+    function updateLearnModeViewportTooltips() {
+      if (appMode !== 'learn') return;
+      
+      const currentZoom = map.getZoom();
+      const threshold = getLabelZoomThreshold();
+      if (currentZoom < threshold) {
+        clearLearnTooltips();
+        return;
+      }
+
+      const bounds = map.getBounds();
+      const existingCenters = new Set();
+      
+      // 先记录现有的中心点，避免重复渲染
+      learnTooltips.forEach(item => {
+        existingCenters.add(item.lat + ',' + item.lng);
+      });
+
+      const newTooltips = [];
+      const currentLatLngs = [];
+
+      geojsonLayer.eachLayer(layer => {
+        const feature = layer.feature;
+        const val = getFeatureValue(feature);
+        const center = getFeatureMainCenter(feature);
+
+        if (center && val && bounds.contains(center)) {
+          const key = center[0] + ',' + center[1];
+          currentLatLngs.push(key);
+
+          // 如果视口内还没有这个标签，则动态创建
+          if (!existingCenters.has(key)) {
+            const tt = L.tooltip({
+              permanent: true,
+              direction: 'center',
+              className: 'map-label-tooltip'
+            })
+            .setContent(String(val))
+            .setLatLng(center);
+
+            tt.addTo(map);
+            newTooltips.push({ lat: center[0], lng: center[1], tooltip: tt });
+          }
+        }
+      });
+
+      // 移除已经滑出视口的标签，释放浏览器内存与 DOM
+      const activeTooltips = [];
+      learnTooltips.forEach(item => {
+        const key = item.lat + ',' + item.lng;
+        if (currentLatLngs.includes(key)) {
+          activeTooltips.push(item);
+        } else {
+          map.removeLayer(item.tooltip);
+        }
+      });
+
+      learnTooltips = activeTooltips.concat(newTooltips);
+    }
 
     function style(feature) {
       const isDark = document.body.classList.contains('dark-mode');
@@ -857,6 +945,7 @@
       if (currentCountry === 'turkey') defaultFill = '#0284c7';
       if (currentCountry === 'germany') defaultFill = '#7c3aed';
       if (currentCountry === 'indonesia') defaultFill = '#f97316';
+      if (currentCountry === 'japan') defaultFill = '#0d9488';
 
       let finalFillColor = isDark ? '#334155' : defaultFill;
       let finalFillOpacity = 0.15;
@@ -923,6 +1012,16 @@
         return String(props.GEN || props.name || props.NAME_2 || props.district || '');
       } else if (currentCountry === 'indonesia') {
         return String(props.NAME_2 || props.kabupaten || props.kota || props.name || props.NAME_3 || '');
+      } else if (currentCountry === 'japan') {
+        return String(
+          props.N03_004 || 
+          props.N03_003 || 
+          props.CITY || 
+          props.NAME || 
+          props.name || 
+          props.S_NAME || 
+          ''
+        );
       }
       return '';
     }
@@ -961,6 +1060,7 @@
       appMode = mode;
       clearHighlightedLayers();
       clearReviewTooltips();
+      clearLearnTooltips();
       
       document.getElementById('home-view').classList.remove('active');
       document.getElementById('game-view').classList.add('active');
@@ -975,6 +1075,8 @@
         map.setView([51.1657, 10.4515], 6);
       } else if (currentCountry === 'indonesia') {
         map.setView([-0.7893, 113.9213], 5);
+      } else if (currentCountry === 'japan') {
+        map.setView([36.2048, 138.2529], 6);
       } else {
         map.setView([-14.2350, -51.9253], 4);
       }
@@ -986,9 +1088,21 @@
         document.getElementById('search-code-input').value = '';
         closeSearchDropdown();
         resetGame();
-        const targetZoom = (currentCountry === 'turkey' || currentCountry === 'indonesia') ? 7 : (currentCountry === 'germany' ? 7 : 5);
+        
+        let targetZoom = 5;
+        if (currentCountry === 'turkey' || currentCountry === 'indonesia') targetZoom = 7;
+        else if (currentCountry === 'germany') targetZoom = 7;
+        else if (currentCountry === 'japan') targetZoom = 7;
+        
         map.setZoom(targetZoom);
-        if (map.getZoom() >= targetZoom) mapElem.classList.remove('hide-labels');
+        
+        const threshold = getLabelZoomThreshold();
+        if (map.getZoom() >= threshold) {
+          mapElem.classList.remove('hide-labels');
+          setTimeout(updateLearnModeViewportTooltips, 100);
+        } else {
+          mapElem.classList.add('hide-labels');
+        }
       } else {
         quizElems.forEach(el => el.style.display = 'inline-block');
         learnElems.forEach(el => el.style.display = 'none');
@@ -1007,6 +1121,7 @@
       if (currentCountry === 'turkey') filename = 'tur_admin2.json';
       if (currentCountry === 'germany') filename = 'landkreis.json';
       if (currentCountry === 'indonesia') filename = 'kota-kabupaten.json';
+      if (currentCountry === 'japan') filename = 'jp1995.geojson';
 
       fetch(filename)
         .then(response => {
@@ -1021,7 +1136,11 @@
           }).addTo(map);
 
           resetGame();
-          setTimeout(() => { map.invalidateSize(); if (appMode === 'quiz') openSettings(); }, 200);
+          setTimeout(() => { 
+            map.invalidateSize(); 
+            if (appMode === 'learn') updateLearnModeViewportTooltips();
+            if (appMode === 'quiz') openSettings(); 
+          }, 200);
         })
         .catch(err => {
           alert(err.message);
@@ -1167,6 +1286,7 @@
       closeSettings();
       clearHighlightedLayers();
       clearReviewTooltips();
+      clearLearnTooltips();
       document.getElementById('game-over-modal').style.display = 'none';
       document.getElementById('game-view').classList.remove('active');
       document.getElementById('home-view').classList.add('active');
@@ -1222,6 +1342,7 @@
       }
 
       clearReviewTooltips();
+      clearLearnTooltips();
       if (geojsonLayer) {
         geojsonLayer.setStyle(style);
       }
@@ -1269,6 +1390,7 @@
       isWaitingNext = false;
       clearHighlightedLayers();
       clearReviewTooltips();
+      clearLearnTooltips();
       document.getElementById('target-label').innerText = "--";
       document.getElementById('score-fraction').innerText = `${translations[currentLanguage].progress}: 0/${allFeatures.length}`;
       document.getElementById('time-val').innerText = translations[currentLanguage].noLimit;
@@ -1288,7 +1410,6 @@
       if (timerInterval) clearInterval(timerInterval);
       const t = translations[currentLanguage];
 
-      // 保存最高成绩
       saveHighScore(currentCountry, correctCount, totalQuestions);
 
       document.getElementById('modal-title').innerText = titleText;
@@ -1310,8 +1431,8 @@
     function reviewWrongAnswers() {
       document.getElementById('game-over-modal').style.display = 'none';
       clearReviewTooltips();
+      clearLearnTooltips();
 
-      // 强制在回顾模式下展示所有标签
       document.getElementById('map').classList.remove('hide-labels');
 
       geojsonLayer.eachLayer(layer => {
@@ -1319,7 +1440,6 @@
         const center = getFeatureMainCenter(layer.feature);
 
         if (wrongAnswers.includes(val)) {
-          // 错题：红色突出显示 + 错题样式标签
           layer.setStyle({ fillColor: '#dc2626', fillOpacity: 0.65, weight: 2, color: '#991b1b' });
 
           if (center && val) {
@@ -1335,7 +1455,6 @@
             reviewTooltips.push(tt);
           }
         } else {
-          // 其它正常区域：同样带上普通地名标签
           if (center && val) {
             const tt = L.tooltip({
               permanent: true,
@@ -1429,19 +1548,8 @@
 
     function onEachFeature(feature, layer) {
       const val = getFeatureValue(feature);
-      const mainCenter = getFeatureMainCenter(feature);
 
-      // 学习模式下渲染标签
-      if (appMode === 'learn' && mainCenter && val) {
-        L.tooltip({
-          permanent: true,
-          direction: 'center',
-          className: 'map-label-tooltip'
-        })
-        .setContent(String(val))
-        .setLatLng(mainCenter)
-        .addTo(map);
-      }
+      // 🚀 核心优化：学习模式下不再在 onEachFeature 里盲目全图绑定 Tooltip，而是交由上面的动态视口渲染器统一接管，彻底杜绝瞬间生成几千个 DOM 带来的严重卡顿
 
       layer.on({
         mouseover: (e) => {
@@ -1502,7 +1610,6 @@
       });
     }
 
-    // 🚀 初始化应用语言呈现与本地存储设置
     loadSavedSettings();
     applyLanguage();
   </script>

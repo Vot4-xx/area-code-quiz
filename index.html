@@ -590,7 +590,8 @@
   <script>
     const map = L.map('map').setView([-14.2350, -51.9253], 4);
 
-    const googleTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    // 🌐 设定为标准的英文 Google 地图底图 (&hl=en)
+    const googleTile = L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       attribution: '&copy; Google Maps'
@@ -1386,11 +1387,10 @@
         click: (e) => {
           if (appMode === 'learn') return;
 
-          // 🔒 游戏已被清空、暂停或处于下一题等待倒计时中，拒绝点击
           if (!isPlaying || isPaused || isWaitingNext) return;
 
           if (val === currentTarget && val !== '') {
-            isWaitingNext = true; // 锁定点击
+            isWaitingNext = true; 
             correctCount++;
             currentQuestionIndex++;
             updateUI();
@@ -1408,7 +1408,7 @@
             updateUI();
 
             if (currentMistakes >= maxMistakes) {
-              isWaitingNext = true; // 🔒 达到错误上限立即锁定点击
+              isWaitingNext = true; 
 
               if (!wrongAnswers.includes(currentTarget)) {
                 wrongAnswers.push(currentTarget);
